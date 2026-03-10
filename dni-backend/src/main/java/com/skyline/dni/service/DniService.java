@@ -27,14 +27,20 @@ public class DniService {
         String url = "https://api.apis.net.pe/v1/dni?numero=" + dni;
 
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> body = response.getBody();
-                
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    null,
+                    new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                    });
+
+            Map<String, Object> body = response.getBody();
+            if (response.getStatusCode().is2xxSuccessful() && body != null) {
+
                 String nombres = (String) body.get("nombres");
                 String apellidoPaterno = (String) body.get("apellidoPaterno");
                 String apellidoMaterno = (String) body.get("apellidoMaterno");
-                
+
                 if (nombres != null) {
                     DniResponse dniResponse = new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
                     guardarRegistroDni(dniResponse);
@@ -89,10 +95,12 @@ public class DniService {
     }
 
     private DniResponse generarDataSimulada(String dni) {
-        String[] nombresDb = {"Carlos", "María", "Juan", "Ana", "Luis", "Carmen", "Jorge", "Rosa", "José", "Luz"};
-        String[] apellidosDb = {"Pérez", "García", "Rodríguez", "González", "Fernández", "López", "Martínez", "Sánchez", "Gómez", "Díaz"};
-        
-        // Usamos hashcode en lugar del primer dígito para más variabilidad y menos colisiones directas.
+        String[] nombresDb = { "Carlos", "María", "Juan", "Ana", "Luis", "Carmen", "Jorge", "Rosa", "José", "Luz" };
+        String[] apellidosDb = { "Pérez", "García", "Rodríguez", "González", "Fernández", "López", "Martínez",
+                "Sánchez", "Gómez", "Díaz" };
+
+        // Usamos hashcode en lugar del primer dígito para más variabilidad y menos
+        // colisiones directas.
         int hash = Math.abs(dni.hashCode());
         int idxNombre = hash % nombresDb.length;
         int idxApPat = (hash / 10) % apellidosDb.length;
@@ -103,7 +111,10 @@ public class DniService {
         String apellidoMaterno = apellidosDb[idxApMat];
 
         // Simulamos un retraso de 800ms para mostrar el loading state en React
-        try { Thread.sleep(800); } catch (InterruptedException e) {}
+        try {
+            Thread.sleep(800);
+        } catch (InterruptedException e) {
+        }
 
         return new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
     }
