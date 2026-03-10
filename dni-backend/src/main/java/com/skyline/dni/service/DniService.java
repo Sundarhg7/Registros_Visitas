@@ -75,47 +75,24 @@ public class DniService {
             System.err.println("Fallo al consultar dniperu.com: " + e.getMessage());
         }
 
-        // 3. Fallback de ultimo recurso si todo falla (Fix: Datos no deterministas)
-        DniResponse fallback = generarDataSimulada(dni);
-        guardarRegistroDni(fallback);
-        return fallback;
+        // 3. Ya no hay fallback simulado. Si todo falla, arrojar excepcion
+        throw new RuntimeException("DNI no encontrado o servicio inactivo");
     }
 
-    private void guardarRegistroDni(DniResponse response) {
+    public void guardarRegistroDni(String dni, String nombres, String apellidos) {
         try {
             DniRecord record = new DniRecord();
-            record.setDni(response.getDni());
-            record.setNombres(response.getNombres());
-            record.setApellidos(response.getApellidoPaterno() + " " + response.getApellidoMaterno());
+            record.setDni(dni);
+            record.setNombres(nombres);
+            record.setApellidos(apellidos);
             dniRepository.save(record);
         } catch (Exception e) {
-            // Log simple, si falla BD al menos la API responde
             System.err.println("No se pudo guardar el registro en DB: " + e.getMessage());
         }
     }
 
-    private DniResponse generarDataSimulada(String dni) {
-        String[] nombresDb = { "Carlos", "María", "Juan", "Ana", "Luis", "Carmen", "Jorge", "Rosa", "José", "Luz" };
-        String[] apellidosDb = { "Pérez", "García", "Rodríguez", "González", "Fernández", "López", "Martínez",
-                "Sánchez", "Gómez", "Díaz" };
-
-        // Usamos hashcode en lugar del primer dígito para más variabilidad y menos
-        // colisiones directas.
-        int hash = Math.abs(dni.hashCode());
-        int idxNombre = hash % nombresDb.length;
-        int idxApPat = (hash / 10) % apellidosDb.length;
-        int idxApMat = (hash / 100) % apellidosDb.length;
-
-        String nombres = nombresDb[idxNombre];
-        String apellidoPaterno = apellidosDb[idxApPat];
-        String apellidoMaterno = apellidosDb[idxApMat];
-
-        // Simulamos un retraso de 800ms para mostrar el loading state en React
-        try {
-            Thread.sleep(800);
-        } catch (InterruptedException e) {
-        }
-
-        return new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
+    private void guardarRegistroDni(DniResponse response) {
+        guardarRegistroDni(response.getDni(), response.getNombres(),
+                response.getApellidoPaterno() + " " + response.getApellidoMaterno());
     }
 }
