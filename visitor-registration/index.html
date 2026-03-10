@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Visitas | {SHG} Access</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="ph-fill ph-buildings"></i>
+                <h1>{SHG} Access</h1>
+            </div>
+            <div class="time-widget" id="timeWidget">--:--</div>
+        </header>
+
+        <main class="dashboard">
+            <!-- Left Column: Form -->
+            <section class="glass-panel form-section">
+                <h2>Nueva Visita</h2>
+                <p class="subtitle">Ingrese el DNI para autocompletar los datos</p>
+
+                <form id="registrationForm">
+                    <div class="input-group search-group">
+                        <label for="dni">Número de DNI</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-identification-card"></i>
+                            <input type="text" id="dni" placeholder="Ej. 12345678" maxlength="8" autocomplete="off"
+                                required>
+                            <button type="button" id="searchBtn" class="btn-icon" title="Buscar DNI">
+                                <i class="ph ph-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <span class="helper-text" id="dniHelper"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="nombre">Nombre</label>
+                            <div class="input-wrapper disabled">
+                                <i class="ph ph-user"></i>
+                                <input type="text" id="nombre" placeholder="Nombre" readonly required>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="apellido">Apellido</label>
+                            <div class="input-wrapper disabled">
+                                <i class="ph ph-user"></i>
+                                <input type="text" id="apellido" placeholder="Apellido" readonly required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="departamento">Departamento / Destino</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-door"></i>
+                            <input type="text" id="departamento" placeholder="Ej. 402B" autocomplete="off" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="registerBtn">
+                        <i class="ph ph-check-circle"></i>
+                        Registrar Visita
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Column: List -->
+            <section class="glass-panel list-section">
+                <div class="list-header">
+                    <h2>Registros del Día</h2>
+                    <span class="badge" id="visitCount">0</span>
+                </div>
+
+                <div class="visit-list" id="visitList">
+                    <!-- Cards will be injected here -->
+                    <div class="empty-state">
+                        <i class="ph ph-users-three"></i>
+                        <p>No hay visitas registradas aún.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
