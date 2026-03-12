@@ -30,7 +30,6 @@ public class DniService {
                 .flatMap(optionalRecord -> {
                     if (optionalRecord.isPresent()) {
                         DniRecord local = optionalRecord.get();
-                        // Dividimos apellidos por espacio si es posible o lo asignamos al paterno
                         String[] apellidos = local.getApellidos().split(" ", 2);
                         String paterno = apellidos.length > 0 ? apellidos[0] : "";
                         String materno = apellidos.length > 1 ? apellidos[1] : "";
@@ -55,7 +54,8 @@ public class DniService {
 
                     if (nombres != null) {
                         DniResponse response = new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
-                        return guardarRegistroLocal(response).thenReturn(response);
+                        // Solo devolvemos la respuesta, ya NO guardamos aquí
+                        return Mono.just(response);
                     }
                     return Mono.<DniResponse>empty();
                 })
@@ -73,7 +73,8 @@ public class DniService {
         }).subscribeOn(Schedulers.boundedElastic())
         .flatMap(res -> {
             if (res != null) {
-                return guardarRegistroLocal(res).thenReturn(res);
+                // Solo devolvemos la respuesta
+                return Mono.just(res);
             }
             return fallbackDniPeruCom(dni);
         })
@@ -90,31 +91,27 @@ public class DniService {
         }).subscribeOn(Schedulers.boundedElastic())
         .flatMap(res -> {
             if (res != null) {
-                return guardarRegistroLocal(res).thenReturn(res);
+                // Solo devolvemos la respuesta
+                return Mono.just(res);
             }
-            return Mono.error(new RuntimeException("DNI no encontrado o servicio inactivo"));
+            return Mono.<DniResponse>error(new RuntimeException("DNI no encontrado o servicio inactivo"));
         })
         .switchIfEmpty(Mono.error(new RuntimeException("DNI no encontrado o servicio inactivo")));
     }
 
-    public void guardarRegistroDni(String dni, String nombres, String apellidos, String departamento) {
+    // Se añade el parámetro observaciones a la firma del método
+    public void guardarRegistroDni(String dni, String nombres, String apellidos, String departamento, String observaciones) {
         try {
             DniRecord record = new DniRecord();
             record.setDni(dni);
             record.setNombres(nombres);
             record.setApellidos(apellidos);
             record.setDepartamento(departamento);
+            record.setObservaciones(observaciones); // Inyectamos la observación a la base de datos
             dniRepository.save(record);
         } catch (Exception e) {
             System.err.println("No se pudo guardar el registro en DB: " + e.getMessage());
         }
-    }
-
-    private Mono<Void> guardarRegistroLocal(DniResponse response) {
-        return Mono.fromRunnable(() -> guardarRegistroDni(response.getDni(), response.getNombres(),
-                response.getApellidoPaterno() + " " + response.getApellidoMaterno(), null))
-            .subscribeOn(Schedulers.boundedElastic())
-            .then();
     }
 
     public java.util.List<DniRecord> obtenerRegistrosPorFecha(java.time.LocalDate fecha) {
