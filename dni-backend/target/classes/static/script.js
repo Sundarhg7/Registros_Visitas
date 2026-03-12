@@ -12,6 +12,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const visitCount = document.getElementById('visitCount');
     const registerBtn = document.getElementById('registerBtn');
     const filterDateInput = document.getElementById('filterDate');
+    const themeToggleBtn = document.getElementById('themeToggle');
+    
+    const btnExport = document.getElementById('btnExport');
+    const statTotal = document.getElementById('statTotal');
+    const statPeak = document.getElementById('statPeak');
+    const statLast = document.getElementById('statLast');
+
+    // Theme Toggle Logic
+    if (themeToggleBtn) {
+        const themeIcon = themeToggleBtn.querySelector('i');
+        
+        // Sync icon on load (dark-theme class is added in index.html head)
+        if (document.documentElement.classList.contains('dark-theme')) {
+            themeIcon.className = 'ph ph-sun';
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark-theme');
+            
+            if (document.documentElement.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.className = 'ph ph-sun';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.className = 'ph ph-moon';
+            }
+        });
+    }
 
     // State
     let visits = [];
@@ -195,8 +223,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2000);
     });
 
+    const calculateStats = () => {
+        if (!statTotal) return;
+
+        statTotal.textContent = visits.length;
+
+        if (visits.length === 0) {
+            statPeak.textContent = '--:--';
+            statLast.textContent = 'N/A';
+            return;
+        }
+
+        // Último ingreso (es el primer elemento porque se ordenan desc)
+        const lastFirstName = visits[0].nombreCompleto.split(' ')[0] || 'N/A';
+        statLast.textContent = lastFirstName;
+
+        // Hora pico
+        const hourCounts = {};
+        visits.forEach(v => {
+            const hour = v.timestamp.getHours();
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        });
+
+        let peakHour = -1;
+        let maxCount = 0;
+        for (const [hour, count] of Object.entries(hourCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                peakHour = parseInt(hour, 10);
+            }
+        }
+
+        if (peakHour !== -1) {
+            const currentHourStr = peakHour.toString().padStart(2, '0');
+            const nextHourStr = ((peakHour + 1) % 24).toString().padStart(2, '0');
+            statPeak.textContent = `${currentHourStr}:00 - ${nextHourStr}:00`;
+        } else {
+            statPeak.textContent = '--:--';
+        }
+    };
+
     const updateList = () => {
         visitCount.textContent = visits.length;
+        calculateStats();
 
         if (visits.length === 0) {
             visitList.innerHTML = `
@@ -242,4 +311,34 @@ document.addEventListener('DOMContentLoaded', () => {
         
         visitList.appendChild(fragment);
     };
+
+    const exportToCSV = () => {
+        if (visits.length === 0) return;
+
+        const headers = ["Departamento_Destino", "Nombre_Completo", "DNI", "Fecha", "Hora_Entrada"];
+        const rows = visits.map(v => {
+            const dateStr = v.timestamp.toLocaleDateString('es-PE');
+            const timeStr = v.timestamp.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+            // Escapar datos
+            const dept = `"${(v.depto || 'N/A').replace(/"/g, '""')}"`;
+            const name = `"${v.nombreCompleto.replace(/"/g, '""')}"`;
+            return [dept, name, v.dni, dateStr, timeStr].join(",");
+        });
+
+        const csvContent = headers.join(",") + "\n" + rows.join("\n");
+        // BOM para asegurar UTF-8 en Excel
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `visitas_shg_${filterDateInput ? filterDateInput.value : 'export'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    if (btnExport) {
+        btnExport.addEventListener('click', exportToCSV);
+    }
 });

@@ -9,16 +9,26 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        // FOUC prevention logic
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
 </head>
 
-<body>
+<body class="">
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
-                <i class="ph-fill ph-buildings"></i>
-                <h1>{SHG}</h1>
+                <div class="shg-logo">SG</div>
+                <h1>Panel</h1>
             </div>
             <div class="header-actions">
+                <button id="themeToggle" class="btn-icon-header" title="Cambiar Tema">
+                    <i class="ph ph-moon"></i>
+                </button>
                 <div class="time-widget" id="timeWidget">--:--</div>
                 <a href="/logout" class="btn-logout" title="Cerrar Sessión">
                     <i class="ph ph-sign-out"></i>
@@ -78,11 +88,39 @@
                 </form>
             </section>
 
-            <!-- Right Column: List -->
+            <!-- Right Column: List and Stats -->
             <section class="glass-panel list-section">
+                <!-- Stats Panel -->
+                <div class="stats-panel" id="statsPanel">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-users"></i></div>
+                        <div class="stat-details">
+                            <span class="stat-label">Total Visitas</span>
+                            <span class="stat-value" id="statTotal">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-clock"></i></div>
+                        <div class="stat-details">
+                            <span class="stat-label">Hora Pico</span>
+                            <span class="stat-value" id="statPeak">--:--</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-user-focus"></i></div>
+                        <div class="stat-details">
+                            <span class="stat-label">Último Ingreso</span>
+                            <span class="stat-value" id="statLast">N/A</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="list-header">
                     <h2>Registros Históricos</h2>
                     <div class="list-actions">
+                        <button type="button" id="btnExport" class="btn-secondary" title="Descargar Reporte (CSV)">
+                            <i class="ph ph-download-simple"></i>
+                        </button>
                         <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha">
                         <span class="badge" id="visitCount">0</span>
                     </div>
