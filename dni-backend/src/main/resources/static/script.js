@@ -23,21 +23,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (themeToggleBtn) {
         const themeIcon = themeToggleBtn.querySelector('i');
         
-        // Sync icon on load (dark-theme class is added in index.html head)
-        if (document.documentElement.classList.contains('dark-theme')) {
-            themeIcon.className = 'ph ph-sun';
-        }
+        const updateIcon = (isDark) => {
+            themeIcon.className = isDark ? 'ph ph-sun' : 'ph ph-moon';
+        };
+
+        // Sync icon on load
+        updateIcon(document.documentElement.classList.contains('dark-theme'));
 
         themeToggleBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark-theme');
-            
-            if (document.documentElement.classList.contains('dark-theme')) {
-                localStorage.setItem('theme', 'dark');
-                themeIcon.className = 'ph ph-sun';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeIcon.className = 'ph ph-moon';
-            }
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateIcon(isDark);
         });
     }
 
@@ -61,24 +57,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, 1000);
 
-    // Initial Time Set
     timeWidget.textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    // Llamada al backend Spring Boot (Ruta Relativa para Render/Producción)
+    // API Calls
     const fetchDniData = async (dni) => {
         try {
-            // Se eliminó http://localhost:8080 para que funcione en cualquier servidor
             const response = await fetch(`/api/v1/personas/dni/${dni}`);
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.mensaje || "DNI no encontrado o servicio inactivo");
+                throw new Error(errorData.mensaje || "DNI no encontrado");
             }
-
             const data = await response.json();
             return {
                 nombres: data.nombres,
-                apellidos: `${data.apellidoPaterno} ${data.apellidoMaterno}`.trim()
+                apellidos: `${data.apellidoPaterno || ''} ${data.apellidoMaterno || ''}`.trim()
             };
         } catch (error) {
             throw error;
@@ -94,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: record.id,
                     dni: record.dni,
                     nombreCompleto: `${record.nombres || ''} ${record.apellidos || ''}`.trim(),
-                    depto: record.departamento || "N/A",
+                    depto: record.departamento || "N/A", // Mapeo corregido para Java
                     timestamp: new Date(record.fechaConsulta)
                 }));
                 updateList();
@@ -104,29 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (filterDateInput) {
-        filterDateInput.addEventListener('change', (e) => {
-            fetchHistory(e.target.value);
-        });
-        // Cargar visita de hoy al inicio
-        fetchHistory(today);
-    }
-
-    // Handle Search
+    // Form Handlers
     const searchDni = async () => {
         const dniValue = dniInput.value.trim();
-
         if (dniValue.length < 8) {
             showHelper("El DNI debe tener 8 dígitos", true);
             return;
         }
-
         if (isFetching) return;
 
         isFetching = true;
         searchBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i>';
-        showHelper("Consultando en Reniec...", false);
-        dniHelper.style.color = "var(--text-secondary)";
+        showHelper("Consultando...", false);
 
         try {
             const data = await fetchDniData(dniValue);
@@ -138,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             nombreInput.value = "";
             apellidoInput.value = "";
-            showHelper(error.message || "Error al buscar", true);
+            showHelper(error.message || "Error", true);
         } finally {
             isFetching = false;
             searchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i>';
@@ -151,43 +132,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if(isError) dniHelper.style.color = "#ef4444";
     };
 
-    // Event Listeners
+    // Events
     searchBtn.addEventListener('click', searchDni);
-
     dniInput.addEventListener('keypress', (e) => {
-        if(e.key < '0' || e.key > '9') {
-            e.preventDefault();
-        }
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchDni();
-        }
+        if(e.key === 'Enter') { e.preventDefault(); searchDni(); }
     });
 
-    dniInput.addEventListener('input', (e) => {
-        e.target.value = e.target.value.replace(/\D/g, '');
-
-        if(e.target.value.length === 8 && !nombreInput.value) {
-            searchDni();
-        } else if (e.target.value.length < 8) {
-            nombreInput.value = "";
-            apellidoInput.value = "";
-            dniHelper.classList.remove('visible');
-        }
-    });
-
-    // Handle Registration
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const dni = dniInput.value;
         const nombre = nombreInput.value;
         const apellido = apellidoInput.value;
         const depto = deptoInput.value;
-
-        if (!dni || !nombre || !apellido || !depto) {
-            return;
-        }
 
         const originalBtnText = registerBtn.innerHTML;
         registerBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Registrando...';
@@ -201,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                // Add to state
                 const newVisit = {
                     id: Date.now(),
                     dni,
@@ -209,205 +164,93 @@ document.addEventListener('DOMContentLoaded', () => {
                     depto,
                     timestamp: new Date()
                 };
-
                 visits.unshift(newVisit);
-
-                // Update UI
                 updateList();
-
-                // Reset Form
                 registerForm.reset();
                 nombreInput.value = "";
                 apellidoInput.value = "";
                 dniHelper.classList.remove('visible');
-                dniInput.focus();
-
-                // Success Feedback
-                registerBtn.innerHTML = '<i class="ph ph-check-circle"></i> Registrado con éxito!';
+                registerBtn.innerHTML = '<i class="ph ph-check-circle"></i> ¡Listo!';
                 registerBtn.style.background = 'var(--success-color)';
-                registerBtn.style.boxShadow = '0 10px 20px -10px rgba(16, 185, 129, 0.5)';
-
                 setTimeout(() => {
                     registerBtn.innerHTML = originalBtnText;
                     registerBtn.style.background = '';
-                    registerBtn.style.boxShadow = '';
                     registerBtn.disabled = false;
                 }, 2000);
-            } else {
-                showHelper("Error al registrar visita en el servidor", true);
-                registerBtn.innerHTML = originalBtnText;
-                registerBtn.disabled = false;
             }
         } catch (error) {
-            showHelper("Error de conexión al registrar visita", true);
-            registerBtn.innerHTML = originalBtnText;
+            showHelper("Error de conexión", true);
             registerBtn.disabled = false;
         }
     });
 
-    const calculateStats = () => {
-        if (!statTotal) return;
-
-        statTotal.textContent = visits.length;
-
-        if (visits.length === 0) {
-            statPeak.textContent = '--:--';
-            statLast.textContent = 'N/A';
-            return;
-        }
-
-        // Último ingreso (es el primer elemento porque se ordenan desc)
-        const lastFirstName = visits[0].nombreCompleto.split(' ')[0] || 'N/A';
-        statLast.textContent = lastFirstName;
-
-        // Hora pico
-        const hourCounts = {};
-        visits.forEach(v => {
-            const hour = v.timestamp.getHours();
-            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-        });
-
-        let peakHour = -1;
-        let maxCount = 0;
-        for (const [hour, count] of Object.entries(hourCounts)) {
-            if (count > maxCount) {
-                maxCount = count;
-                peakHour = parseInt(hour, 10);
-            }
-        }
-
-        if (peakHour !== -1) {
-            const currentHourStr = peakHour.toString().padStart(2, '0');
-            const nextHourStr = ((peakHour + 1) % 24).toString().padStart(2, '0');
-            statPeak.textContent = `${currentHourStr}:00 - ${nextHourStr}:00`;
-        } else {
-            statPeak.textContent = '--:--';
-        }
-    };
-
+    // UI Updates
     const updateList = () => {
         visitCount.textContent = visits.length;
         calculateStats();
 
         if (visits.length === 0) {
-            visitList.innerHTML = `
-                <div class="empty-state">
-                    <i class="ph ph-users-three"></i>
-                    <p>No hay visitas registradas aún.</p>
-                </div>
-            `;
+            visitList.innerHTML = '<div class="empty-state"><i class="ph ph-users-three"></i><p>Sin registros.</p></div>';
             return;
         }
 
         visitList.innerHTML = '';
-        
-        // Optimización del DOM: uso de DocumentFragment para evitar reflows con cada appendChild
         const fragment = document.createDocumentFragment();
 
         visits.forEach(visit => {
-            const timeString = visit.timestamp.toLocaleTimeString('es-PE', {
-                hour: '2-digit',
-                minute: '2-digit'
+            const timeString = visit.timestamp.toLocaleTimeString('en-US', {
+                hour: '2-digit', minute: '2-digit', hour12: true
             });
 
             const card = document.createElement('div');
             card.className = 'visit-card';
-            
-            // Reutilización de fragmentos para inserción masiva y optimizada
             card.innerHTML = `
                 <div class="visit-info">
                     <span class="visit-name">${visit.nombreCompleto}</span>
-                    <span class="visit-dni">
-                        <i class="ph ph-identification-card"></i>
-                        ${visit.dni}
-                    </span>
+                    <span class="visit-dni"><i class="ph ph-identification-card"></i> ${visit.dni}</span>
                     <span class="visit-time">${timeString}</span>
                 </div>
-                <div class="visit-dest">
-                    <i class="ph ph-door"></i>
-                    ${visit.depto}
-                </div>
+                <div class="visit-dest"><i class="ph ph-door"></i> ${visit.depto}</div>
             `;
             fragment.appendChild(card);
         });
-        
         visitList.appendChild(fragment);
     };
 
-    const exportToExcel = () => {
-        if (visits.length === 0) return;
-
-        let tableHtml = `
-            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-            <head>
-                <meta charset="utf-8">
-                <!--[if gte mso 9]>
-                <xml>
-                    <x:ExcelWorkbook>
-                        <x:ExcelWorksheets>
-                            <x:ExcelWorksheet>
-                                <x:Name>Reporte Visitas</x:Name>
-                                <x:WorksheetOptions>
-                                    <x:DisplayGridlines/>
-                                </x:WorksheetOptions>
-                            </x:ExcelWorksheet>
-                        </x:ExcelWorksheets>
-                    </x:ExcelWorkbook>
-                </xml>
-                <![endif]-->
-                <style>
-                    table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
-                    th { background-color: #3f51b5; color: white; padding: 10px; font-weight: bold; border: 1px solid #ddd; }
-                    td { padding: 8px; border: 1px solid #ddd; }
-                </style>
-            </head>
-            <body>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>DNI</th>
-                            <th>Nombre Completo</th>
-                            <th>Departamento / Destino</th>
-                            <th>Fecha</th>
-                            <th>Hora Entrada</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        visits.forEach(v => {
-            const dateStr = v.timestamp.toLocaleDateString('es-PE');
-            const timeStr = v.timestamp.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-            tableHtml += `
-                <tr>
-                    <td style='mso-number-format:"\\@";'>${v.dni}</td>
-                    <td>${v.nombreCompleto}</td>
-                    <td>${v.depto || 'N/A'}</td>
-                    <td>${dateStr}</td>
-                    <td>${timeStr}</td>
-                </tr>
-            `;
-        });
-
-        tableHtml += `
-                    </tbody>
-                </table>
-            </body>
-            </html>
-        `;
-
-        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `visitas_shg_${filterDateInput ? filterDateInput.value : 'export'}.xls`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const calculateStats = () => {
+        if (!statTotal) return;
+        statTotal.textContent = visits.length;
+        if (visits.length > 0) {
+            statLast.textContent = visits[0].nombreCompleto.split(' ')[0];
+            const hourCounts = {};
+            visits.forEach(v => {
+                const hour = v.timestamp.getHours();
+                hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+            });
+            let peak = Object.keys(hourCounts).reduce((a, b) => hourCounts[a] > hourCounts[b] ? a : b);
+            statPeak.textContent = `${peak.toString().padStart(2, '0')}:00`;
+        }
     };
 
-    if (btnExport) {
-        btnExport.addEventListener('click', exportToExcel);
+    // Export
+    const exportToExcel = () => {
+        if (visits.length === 0) return;
+        let tableHtml = `<html><head><meta charset="utf-8"><style>th{background:#6366f1;color:white;padding:10px;}td{padding:8px;border:1px solid #ddd;}</style></head><body><table><thead><tr><th>DNI</th><th>Nombre</th><th>Dpto</th><th>Fecha</th><th>Hora</th></tr></thead><tbody>`;
+        visits.forEach(v => {
+            tableHtml += `<tr><td style='mso-number-format:"\\@";'>${v.dni}</td><td>${v.nombreCompleto}</td><td>${v.depto}</td><td>${v.timestamp.toLocaleDateString()}</td><td>${v.timestamp.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:true})}</td></tr>`;
+        });
+        tableHtml += `</tbody></table></body></html>`;
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Reporte_{SHG}.xls`;
+        link.click();
+    };
+
+    if (btnExport) btnExport.addEventListener('click', exportToExcel);
+    if (filterDateInput) {
+        filterDateInput.addEventListener('change', (e) => fetchHistory(e.target.value));
+        fetchHistory(today);
     }
 });
