@@ -15,13 +15,14 @@ public class DniRecord {
     private String dni;
 
     @Column(nullable = false)
-    private String nombres; // <--- ESTA LÍNEA FALTABA Y POR ESO FALLABA EL DEPLOY
+    private String nombres;
 
     @Column(nullable = false)
     private String apellidos;
 
-    @Column(name = "departamento")
     private String departamento;
+    
+    private String observaciones; // <--- Nueva casilla
 
     @Column(name = "fecha_consulta", nullable = false, updatable = false)
     private LocalDateTime fechaConsulta;
@@ -33,22 +34,19 @@ public class DniRecord {
         }
     }
 
-    // GETTERS Y SETTERS
+    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
     public String getDni() { return dni; }
     public void setDni(String dni) { this.dni = dni; }
-
     public String getNombres() { return nombres; }
     public void setNombres(String nombres) { this.nombres = nombres; }
-
     public String getApellidos() { return apellidos; }
     public void setApellidos(String apellidos) { this.apellidos = apellidos; }
-
     public String getDepartamento() { return departamento; }
     public void setDepartamento(String departamento) { this.departamento = departamento; }
-
+    public String getObservaciones() { return observaciones; }
+    public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
     public LocalDateTime getFechaConsulta() { return fechaConsulta; }
     public void setFechaConsulta(LocalDateTime fechaConsulta) { this.fechaConsulta = fechaConsulta; }
 }
