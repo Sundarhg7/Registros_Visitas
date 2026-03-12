@@ -4,10 +4,11 @@ import com.skyline.dni.dto.DniResponse;
 import com.skyline.dni.entity.DniRecord;
 import com.skyline.dni.repository.DniRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import java.util.Map;
 public class DniService {
 
     @Autowired
-    private RestTemplate restTemplate;
+    private WebClient.Builder webClientBuilder;
 
     @Autowired
     private DniRepository dniRepository;
@@ -23,60 +24,77 @@ public class DniService {
     @Autowired
     private DniScraperService dniScraperService;
 
-    public DniResponse consultarDni(String dni) {
+    public Mono<DniResponse> consultarDni(String dni) {
+        return Mono.fromCallable(() -> dniRepository.findFirstByDniOrderByFechaConsultaDesc(dni))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(optionalRecord -> {
+                    if (optionalRecord.isPresent()) {
+                        DniRecord local = optionalRecord.get();
+                        // Dividimos apellidos por espacio si es posible o lo asignamos al paterno
+                        String[] apellidos = local.getApellidos().split(" ", 2);
+                        String paterno = apellidos.length > 0 ? apellidos[0] : "";
+                        String materno = apellidos.length > 1 ? apellidos[1] : "";
+                        return Mono.just(new DniResponse(local.getDni(), local.getNombres(), paterno, materno));
+                    } else {
+                        return consultarApiExterna(dni);
+                    }
+                });
+    }
+
+    private Mono<DniResponse> consultarApiExterna(String dni) {
         String url = "https://api.apis.net.pe/v1/dni?numero=" + dni;
 
-        try {
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    url,
-                    org.springframework.http.HttpMethod.GET,
-                    null,
-                    new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
-                    });
+        return webClientBuilder.build().get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .flatMap(body -> {
+                    String nombres = (String) body.get("nombres");
+                    String apellidoPaterno = (String) body.get("apellidoPaterno");
+                    String apellidoMaterno = (String) body.get("apellidoMaterno");
 
-            Map<String, Object> body = response.getBody();
-            if (response.getStatusCode().is2xxSuccessful() && body != null) {
+                    if (nombres != null) {
+                        DniResponse response = new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
+                        return guardarRegistroLocal(response).thenReturn(response);
+                    }
+                    return Mono.<DniResponse>empty();
+                })
+                .onErrorResume(e -> fallbackElDniCom(dni))
+                .switchIfEmpty(fallbackElDniCom(dni));
+    }
 
-                String nombres = (String) body.get("nombres");
-                String apellidoPaterno = (String) body.get("apellidoPaterno");
-                String apellidoMaterno = (String) body.get("apellidoMaterno");
-
-                if (nombres != null) {
-                    DniResponse dniResponse = new DniResponse(dni, nombres, apellidoPaterno, apellidoMaterno);
-                    guardarRegistroDni(dniResponse);
-                    return dniResponse;
-                }
+    private Mono<DniResponse> fallbackElDniCom(String dni) {
+        return Mono.fromCallable(() -> {
+            try {
+                return dniScraperService.consultarElDniCom(dni);
+            } catch (Exception e) {
+                return null;
             }
-        } catch (HttpClientErrorException e) {
-            // Ignorar y usar otro metodo
-        } catch (Exception e) {
-            // Ignorar y usar otro metodo
-        }
-
-        // 1. Intentar con eldni.com
-        try {
-            DniResponse response = dniScraperService.consultarElDniCom(dni);
-            if (response != null) {
-                guardarRegistroDni(response);
-                return response;
+        }).subscribeOn(Schedulers.boundedElastic())
+        .flatMap(res -> {
+            if (res != null) {
+                return guardarRegistroLocal(res).thenReturn(res);
             }
-        } catch (Exception e) {
-            System.err.println("Fallo al consultar eldni.com: " + e.getMessage());
-        }
+            return fallbackDniPeruCom(dni);
+        })
+        .switchIfEmpty(fallbackDniPeruCom(dni));
+    }
 
-        // 2. Intentar con dniperu.com (Fallback)
-        try {
-            DniResponse response = dniScraperService.consultarDniPeruCom(dni);
-            if (response != null) {
-                guardarRegistroDni(response);
-                return response;
+    private Mono<DniResponse> fallbackDniPeruCom(String dni) {
+        return Mono.fromCallable(() -> {
+            try {
+                return dniScraperService.consultarDniPeruCom(dni);
+            } catch (Exception e) {
+                return null;
             }
-        } catch (Exception e) {
-            System.err.println("Fallo al consultar dniperu.com: " + e.getMessage());
-        }
-
-        // 3. Ya no hay fallback simulado. Si todo falla, arrojar excepcion
-        throw new RuntimeException("DNI no encontrado o servicio inactivo");
+        }).subscribeOn(Schedulers.boundedElastic())
+        .flatMap(res -> {
+            if (res != null) {
+                return guardarRegistroLocal(res).thenReturn(res);
+            }
+            return Mono.error(new RuntimeException("DNI no encontrado o servicio inactivo"));
+        })
+        .switchIfEmpty(Mono.error(new RuntimeException("DNI no encontrado o servicio inactivo")));
     }
 
     public void guardarRegistroDni(String dni, String nombres, String apellidos) {
@@ -91,8 +109,16 @@ public class DniService {
         }
     }
 
-    private void guardarRegistroDni(DniResponse response) {
-        guardarRegistroDni(response.getDni(), response.getNombres(),
-                response.getApellidoPaterno() + " " + response.getApellidoMaterno());
+    private Mono<Void> guardarRegistroLocal(DniResponse response) {
+        return Mono.fromRunnable(() -> guardarRegistroDni(response.getDni(), response.getNombres(),
+                response.getApellidoPaterno() + " " + response.getApellidoMaterno()))
+            .subscribeOn(Schedulers.boundedElastic())
+            .then();
+    }
+
+    public java.util.List<DniRecord> obtenerRegistrosPorFecha(java.time.LocalDate fecha) {
+        java.time.LocalDateTime start = fecha.atStartOfDay();
+        java.time.LocalDateTime end = fecha.atTime(java.time.LocalTime.MAX);
+        return dniRepository.findByFechaConsultaBetweenOrderByFechaConsultaDesc(start, end);
     }
 }
