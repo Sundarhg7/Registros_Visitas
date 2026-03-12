@@ -15,6 +15,9 @@ public class DniRecord {
     private String dni;
 
     @Column(nullable = false)
+    private String nombres; // <--- ESTA LÍNEA FALTABA Y POR ESO FALLABA EL DEPLOY
+
+    @Column(nullable = false)
     private String apellidos;
 
     @Column(name = "departamento")
@@ -30,51 +33,22 @@ public class DniRecord {
         }
     }
 
-    public Long getId() {
-        return id;
-    }
+    // GETTERS Y SETTERS
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getDni() { return dni; }
+    public void setDni(String dni) { this.dni = dni; }
 
-    public String getDni() {
-        return dni;
-    }
+    public String getNombres() { return nombres; }
+    public void setNombres(String nombres) { this.nombres = nombres; }
 
-    public void setDni(String dni) {
-        this.dni = dni;
-    }
+    public String getApellidos() { return apellidos; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
 
-    public String getNombres() {
-        return nombres;
-    }
+    public String getDepartamento() { return departamento; }
+    public void setDepartamento(String departamento) { this.departamento = departamento; }
 
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
-    }
-
-    public String getApellidos() {
-        return apellidos;
-    }
-
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
-    }
-
-    public LocalDateTime getFechaConsulta() {
-        return fechaConsulta;
-    }
-
-    public void setFechaConsulta(LocalDateTime fechaConsulta) {
-        this.fechaConsulta = fechaConsulta;
-    }
-
-    public String getDepartamento() {
-        return departamento;
-    }
-
-    public void setDepartamento(String departamento) {
-        this.departamento = departamento;
-    }
+    public LocalDateTime getFechaConsulta() { return fechaConsulta; }
+    public void setFechaConsulta(LocalDateTime fechaConsulta) { this.fechaConsulta = fechaConsulta; }
 }
