@@ -97,12 +97,13 @@ public class DniService {
         .switchIfEmpty(Mono.error(new RuntimeException("DNI no encontrado o servicio inactivo")));
     }
 
-    public void guardarRegistroDni(String dni, String nombres, String apellidos) {
+    public void guardarRegistroDni(String dni, String nombres, String apellidos, String departamento) {
         try {
             DniRecord record = new DniRecord();
             record.setDni(dni);
             record.setNombres(nombres);
             record.setApellidos(apellidos);
+            record.setDepartamento(departamento);
             dniRepository.save(record);
         } catch (Exception e) {
             System.err.println("No se pudo guardar el registro en DB: " + e.getMessage());
@@ -111,7 +112,7 @@ public class DniService {
 
     private Mono<Void> guardarRegistroLocal(DniResponse response) {
         return Mono.fromRunnable(() -> guardarRegistroDni(response.getDni(), response.getNombres(),
-                response.getApellidoPaterno() + " " + response.getApellidoMaterno()))
+                response.getApellidoPaterno() + " " + response.getApellidoMaterno(), null))
             .subscribeOn(Schedulers.boundedElastic())
             .then();
     }

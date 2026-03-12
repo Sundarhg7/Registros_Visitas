@@ -8,251 +8,136 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
     <style>
-        /* Override base background just for the login screen to "Soft Skyline" gradient */
-        body.login-page {
-            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-        }
-
-        /* Enforce Light mode for Login specifically */
-        body.login-page {
-            color: #1e293b;
-        }
-
-        .login-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-            padding: 3rem 2.5rem;
+        .login-wrapper-container {
             width: 100%;
             max-width: 420px;
-            position: relative;
-            animation: formFadeIn 0.6s ease-out;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            z-index: 10;
+            margin: 0 auto;
         }
-
-        @keyframes formFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .login-header {
             text-align: center;
             margin-bottom: 2.5rem;
         }
-
-        .shg-logo {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            width: 72px;
-            height: 72px;
-            background: #3f51b5;
-            border-radius: 20px;
-            color: white;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -2px;
-            margin-bottom: 1rem;
-            box-shadow: 0 10px 25px -5px rgba(63, 81, 181, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .shg-logo::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
-        }
-
         .login-header h1 {
             font-size: 1.5rem;
             font-weight: 600;
             margin: 0;
-            color: #1e293b;
+            color: var(--text-primary);
         }
-
         .login-header p {
-            color: #64748b;
+            color: var(--text-secondary);
             font-size: 0.9rem;
             margin-top: 0.5rem;
         }
-
-        .login-group {
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .login-group label {
-            display: block;
+        .error-msg, .logout-msg {
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
             font-size: 0.85rem;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-wrapper {
-            position: relative;
-        }
-
-        .login-wrapper i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 1.25rem;
-            transition: color 0.3s;
-        }
-
-        .login-wrapper input {
-            width: 100%;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 12px;
-            padding: 0.875rem 1rem 0.875rem 3rem;
-            color: #1e293b;
-            font-size: 1rem;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .login-wrapper input:focus {
-            background: #ffffff;
-            border-color: #3f51b5;
-            box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1);
-        }
-
-        .login-wrapper input:focus + i, .login-wrapper:focus-within i {
-            color: #3f51b5;
-        }
-
-        .btn-login {
-            background: #3f51b5;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 1rem;
-            font-size: 1rem;
-            font-weight: 600;
-            width: 100%;
-            display: flex;
+            display: none;
             align-items: center;
-            justify-content: center;
             gap: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 2rem;
-            box-shadow: 0 10px 20px -10px rgba(63, 81, 181, 0.4);
+            margin-bottom: 1.5rem;
         }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            background: #394aba;
-            box-shadow: 0 15px 25px -10px rgba(63, 81, 181, 0.5);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
         .error-msg {
-            background: #fef2f2;
+            background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #fecaca;
-            display: none;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
-        
-        /* Show error if url contains ?error */
-        body.has-error .error-msg {
-            display: flex;
-        }
-        
         .logout-msg {
-            background: #ecfdf5;
-            color: #059669;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #a7f3d0;
-            display: none;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
         }
-
-        /* Show logout message if url contains ?logout */
-        body.has-logout .logout-msg {
-            display: flex;
+        body.has-error .error-msg { display: flex; }
+        body.has-logout .logout-msg { display: flex; }
+        
+        .theme-toggle-login {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 20;
         }
     </style>
 </head>
-<body class="login-page">
-
-    <div class="login-card">
-        <div class="login-header">
-            <div class="shg-logo">
-                SG
-            </div>
-            <h1>Acceso al Sistema</h1>
-            <p>Ingresa tus credenciales para continuar</p>
-        </div>
-
-        <div class="error-msg">
-            <i class="ph ph-warning-circle"></i> Usuario o contraseña incorrectos.
-        </div>
-        
-        <div class="logout-msg">
-            <i class="ph ph-check-circle"></i> Sesión cerrada exitosamente.
-        </div>
-
-        <form action="/login" method="POST">
-            <div class="login-group">
-                <label for="username">Usuario</label>
-                <div class="login-wrapper">
-                    <i class="ph ph-user"></i>
-                    <input type="text" id="username" name="username" placeholder="Tu usuario admin" required autofocus autocomplete="username">
+<body>
+    <button id="themeToggle" class="btn-icon-header theme-toggle-login" title="Cambiar Tema">
+        <i class="ph ph-moon"></i>
+    </button>
+    <div class="login-wrapper-container">
+        <div class="glass-panel">
+            <div class="login-header">
+                <div class="shg-logo">
+                    {SHG}
                 </div>
+                <h1>Acceso al Sistema</h1>
+                <p>Ingresa tus credenciales para continuar</p>
             </div>
 
-            <div class="login-group">
-                <label for="password">Contraseña</label>
-                <div class="login-wrapper">
-                    <i class="ph ph-lock-key"></i>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            <div class="error-msg">
+                <i class="ph ph-warning-circle"></i> Usuario o contraseña incorrectos.
+            </div>
+            
+            <div class="logout-msg">
+                <i class="ph ph-check-circle"></i> Sesión cerrada exitosamente.
+            </div>
+
+            <form action="/login" method="POST">
+                <div class="input-group">
+                    <label for="username">Usuario</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-user"></i>
+                        <input type="text" id="username" name="username" placeholder="Tu usuario admin" required autofocus autocomplete="username">
+                    </div>
                 </div>
-            </div>
 
-            <button type="submit" class="btn-login">
-                Iniciar Sesión
-                <i class="ph ph-arrow-right"></i>
-            </button>
-        </form>
+                <div class="input-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="ph ph-lock-key"></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                    Iniciar Sesión
+                    <i class="ph ph-arrow-right"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
-        // Check URL params to show messages
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('error')) {
             document.body.classList.add('has-error');
         }
         if (urlParams.has('logout')) {
             document.body.classList.add('has-logout');
+        }
+        
+        const themeToggleBtn = document.getElementById('themeToggle');
+        if (themeToggleBtn) {
+            const themeIcon = themeToggleBtn.querySelector('i');
+            if (document.documentElement.classList.contains('dark-theme')) {
+                themeIcon.className = 'ph ph-sun';
+            }
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark-theme');
+                if (document.documentElement.classList.contains('dark-theme')) {
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.className = 'ph ph-sun';
+                } else {
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.className = 'ph ph-moon';
+                }
+            });
         }
     </script>
 </body>

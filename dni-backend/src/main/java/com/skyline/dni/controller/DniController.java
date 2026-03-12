@@ -39,13 +39,14 @@ public class DniController {
         String dni = data.get("dni");
         String nombres = data.get("nombres");
         String apellidos = data.get("apellidos");
+        String departamento = data.get("departamento");
 
         if (dni == null || nombres == null || apellidos == null) {
             return ResponseEntity.badRequest().body("Datos incompletos");
         }
 
         try {
-            dniService.guardarRegistroDni(dni, nombres, apellidos);
+            dniService.guardarRegistroDni(dni, nombres, apellidos, departamento);
             Map<String, String> response = new HashMap<>();
             response.put("mensaje", "Registro guardado correctamente");
             return ResponseEntity.ok(response);

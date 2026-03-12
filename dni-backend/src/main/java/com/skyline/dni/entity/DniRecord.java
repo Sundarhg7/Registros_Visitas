@@ -15,10 +15,10 @@ public class DniRecord {
     private String dni;
 
     @Column(nullable = false)
-    private String nombres;
-
-    @Column(nullable = false)
     private String apellidos;
+
+    @Column(name = "departamento")
+    private String departamento;
 
     @Column(name = "fecha_consulta", nullable = false, updatable = false)
     private LocalDateTime fechaConsulta;
@@ -68,5 +68,13 @@ public class DniRecord {
 
     public void setFechaConsulta(LocalDateTime fechaConsulta) {
         this.fechaConsulta = fechaConsulta;
+    }
+
+    public String getDepartamento() {
+        return departamento;
+    }
+
+    public void setDepartamento(String departamento) {
+        this.departamento = departamento;
     }
 }

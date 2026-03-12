@@ -93,8 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 visits = data.map(record => ({
                     id: record.id,
                     dni: record.dni,
-                    nombreCompleto: `${record.nombres} ${record.apellidos}`.trim(),
-                    depto: "N/A", // Histórico desde DB no tiene destino
+                    nombreCompleto: `${record.nombres || ''} ${record.apellidos || ''}`.trim(),
+                    depto: record.departamento || "N/A",
                     timestamp: new Date(record.fechaConsulta)
                 }));
                 updateList();
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle Registration
-    registerForm.addEventListener('submit', (e) => {
+    registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const dni = dniInput.value;
@@ -189,38 +189,60 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Add to state
-        const newVisit = {
-            id: Date.now(),
-            dni,
-            nombreCompleto: `${nombre} ${apellido}`,
-            depto,
-            timestamp: new Date()
-        };
-
-        visits.unshift(newVisit);
-
-        // Update UI
-        updateList();
-
-        // Reset Form
-        registerForm.reset();
-        nombreInput.value = "";
-        apellidoInput.value = "";
-        dniHelper.classList.remove('visible');
-        dniInput.focus();
-
-        // Success Feedback
         const originalBtnText = registerBtn.innerHTML;
-        registerBtn.innerHTML = '<i class="ph ph-check-circle"></i> Registrado con éxito!';
-        registerBtn.style.background = 'var(--success-color)';
-        registerBtn.style.boxShadow = '0 10px 20px -10px rgba(16, 185, 129, 0.5)';
+        registerBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Registrando...';
+        registerBtn.disabled = true;
 
-        setTimeout(() => {
+        try {
+            const response = await fetch('/api/v1/personas/manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dni, nombres: nombre, apellidos: apellido, departamento: depto })
+            });
+
+            if (response.ok) {
+                // Add to state
+                const newVisit = {
+                    id: Date.now(),
+                    dni,
+                    nombreCompleto: `${nombre} ${apellido}`,
+                    depto,
+                    timestamp: new Date()
+                };
+
+                visits.unshift(newVisit);
+
+                // Update UI
+                updateList();
+
+                // Reset Form
+                registerForm.reset();
+                nombreInput.value = "";
+                apellidoInput.value = "";
+                dniHelper.classList.remove('visible');
+                dniInput.focus();
+
+                // Success Feedback
+                registerBtn.innerHTML = '<i class="ph ph-check-circle"></i> Registrado con éxito!';
+                registerBtn.style.background = 'var(--success-color)';
+                registerBtn.style.boxShadow = '0 10px 20px -10px rgba(16, 185, 129, 0.5)';
+
+                setTimeout(() => {
+                    registerBtn.innerHTML = originalBtnText;
+                    registerBtn.style.background = '';
+                    registerBtn.style.boxShadow = '';
+                    registerBtn.disabled = false;
+                }, 2000);
+            } else {
+                showHelper("Error al registrar visita en el servidor", true);
+                registerBtn.innerHTML = originalBtnText;
+                registerBtn.disabled = false;
+            }
+        } catch (error) {
+            showHelper("Error de conexión al registrar visita", true);
             registerBtn.innerHTML = originalBtnText;
-            registerBtn.style.background = '';
-            registerBtn.style.boxShadow = '';
-        }, 2000);
+            registerBtn.disabled = false;
+        }
     });
 
     const calculateStats = () => {
@@ -312,33 +334,80 @@ document.addEventListener('DOMContentLoaded', () => {
         visitList.appendChild(fragment);
     };
 
-    const exportToCSV = () => {
+    const exportToExcel = () => {
         if (visits.length === 0) return;
 
-        const headers = ["Departamento_Destino", "Nombre_Completo", "DNI", "Fecha", "Hora_Entrada"];
-        const rows = visits.map(v => {
+        let tableHtml = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="utf-8">
+                <!--[if gte mso 9]>
+                <xml>
+                    <x:ExcelWorkbook>
+                        <x:ExcelWorksheets>
+                            <x:ExcelWorksheet>
+                                <x:Name>Reporte Visitas</x:Name>
+                                <x:WorksheetOptions>
+                                    <x:DisplayGridlines/>
+                                </x:WorksheetOptions>
+                            </x:ExcelWorksheet>
+                        </x:ExcelWorksheets>
+                    </x:ExcelWorkbook>
+                </xml>
+                <![endif]-->
+                <style>
+                    table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+                    th { background-color: #3f51b5; color: white; padding: 10px; font-weight: bold; border: 1px solid #ddd; }
+                    td { padding: 8px; border: 1px solid #ddd; }
+                </style>
+            </head>
+            <body>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Nombre Completo</th>
+                            <th>Departamento / Destino</th>
+                            <th>Fecha</th>
+                            <th>Hora Entrada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        visits.forEach(v => {
             const dateStr = v.timestamp.toLocaleDateString('es-PE');
             const timeStr = v.timestamp.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-            // Escapar datos
-            const dept = `"${(v.depto || 'N/A').replace(/"/g, '""')}"`;
-            const name = `"${v.nombreCompleto.replace(/"/g, '""')}"`;
-            return [dept, name, v.dni, dateStr, timeStr].join(",");
+            tableHtml += `
+                <tr>
+                    <td style='mso-number-format:"\\@";'>${v.dni}</td>
+                    <td>${v.nombreCompleto}</td>
+                    <td>${v.depto || 'N/A'}</td>
+                    <td>${dateStr}</td>
+                    <td>${timeStr}</td>
+                </tr>
+            `;
         });
 
-        const csvContent = headers.join(",") + "\n" + rows.join("\n");
-        // BOM para asegurar UTF-8 en Excel
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        tableHtml += `
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
         const url = URL.createObjectURL(blob);
         
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `visitas_shg_${filterDateInput ? filterDateInput.value : 'export'}.csv`);
+        link.setAttribute("download", `visitas_shg_${filterDateInput ? filterDateInput.value : 'export'}.xls`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 
     if (btnExport) {
-        btnExport.addEventListener('click', exportToCSV);
+        btnExport.addEventListener('click', exportToExcel);
     }
 });
