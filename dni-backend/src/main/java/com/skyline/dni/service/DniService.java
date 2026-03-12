@@ -101,18 +101,18 @@ public class DniService {
 
     // Se añade el parámetro observaciones a la firma del método
     public void guardarRegistroDni(String dni, String nombres, String apellidos, String departamento, String observaciones) {
-        try {
-            DniRecord record = new DniRecord();
-            record.setDni(dni);
-            record.setNombres(nombres);
-            record.setApellidos(apellidos);
-            record.setDepartamento(departamento);
-            record.setObservaciones(observaciones); // Inyectamos la observación a la base de datos
-            dniRepository.save(record);
-        } catch (Exception e) {
-            System.err.println("No se pudo guardar el registro en DB: " + e.getMessage());
-        }
+    try {
+        DniRecord record = new DniRecord();
+        record.setDni(dni);
+        record.setNombres(nombres);
+        record.setApellidos(apellidos);
+        record.setDepartamento(departamento);
+        record.setObservaciones(observaciones); // <--- Inyectamos la observación
+        dniRepository.save(record);
+    } catch (Exception e) {
+        System.err.println("No se pudo guardar el registro en DB: " + e.getMessage());
     }
+}
 
     public java.util.List<DniRecord> obtenerRegistrosPorFecha(java.time.LocalDate fecha) {
         java.time.LocalDateTime start = fecha.atStartOfDay();
