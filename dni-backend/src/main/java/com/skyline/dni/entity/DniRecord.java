@@ -2,6 +2,7 @@ package com.skyline.dni.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId; // <--- Import vital para la zona horaria
 
 @Entity
 @Table(name = "dni_records")
@@ -22,7 +23,7 @@ public class DniRecord {
 
     private String departamento;
     
-    private String observaciones; // <--- Nueva casilla
+    private String observaciones;
 
     @Column(name = "fecha_consulta", nullable = false, updatable = false)
     private LocalDateTime fechaConsulta;
@@ -30,7 +31,8 @@ public class DniRecord {
     @PrePersist
     protected void onCreate() {
         if (fechaConsulta == null) {
-            fechaConsulta = LocalDateTime.now();
+            // Obligamos al servidor a usar la hora de Perú, sin importar dónde esté alojado
+            fechaConsulta = LocalDateTime.now(ZoneId.of("America/Lima"));
         }
     }
 
