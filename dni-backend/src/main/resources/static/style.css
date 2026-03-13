@@ -6,31 +6,31 @@
     --panel-border: rgba(226, 232, 240, 0.8);
     --text-primary: #1e293b;
     --text-secondary: #64748b;
-    --accent-color: #6366f1; /* Índigo profesional SHG */
-    --accent-glow: rgba(99, 102, 241, 0.15);
+    --accent-color: #3b82f6; /* Azul premium medio-oscuro */
+    --accent-glow: rgba(59, 130, 246, 0.15);
     --success-color: #10b981;
     --input-bg: #f8fafc;
     --input-border: #cbd5e1;
-    --input-focus: #6366f1;
+    --input-focus: #3b82f6;
     --skyline-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200' preserveAspectRatio='none'%3E%3Cpath fill='%2364748b' fill-opacity='0.1' d='M0,200 L0,150 L30,150 L30,110 L70,110 L70,160 L120,160 L120,80 L160,80 L160,130 L210,130 L210,60 L260,60 L260,110 L310,110 L310,40 L360,40 L360,90 L410,90 L410,20 L480,20 L480,100 L540,100 L540,50 L590,50 L590,120 L650,120 L650,70 L720,70 L720,130 L780,130 L780,40 L850,40 L850,90 L920,90 L920,140 L1000,140 L1000,200 Z'/%3E%3C/svg%3E");
 }
 
 /* Selector universal para el Modo Oscuro */
 .dark-theme {
     /* Tema Oscuro: Deep Navy SHG */
-    --bg-color: #0f172a;
-    --bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    --bg-color: #10141e;
+    --bg-gradient: linear-gradient(135deg, #1e293b 0%, #10141e 100%);
     --panel-bg: #1e293b;
     --panel-border: rgba(51, 65, 85, 0.5);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --accent-color: #818cf8;
-    --accent-glow: rgba(129, 140, 248, 0.2);
+    --accent-color: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.2);
     --success-color: #34d399;
-    --input-bg: #0f172a;
+    --input-bg: #10141e;
     --input-border: #334155;
-    --input-focus: #818cf8;
-    --skyline-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200' preserveAspectRatio='none'%3E%3Cpath fill='%23818cf8' fill-opacity='0.08' d='M0,200 L0,150 L30,150 L30,110 L70,110 L70,160 L120,160 L120,80 L160,80 L160,130 L210,130 L210,60 L260,60 L260,110 L310,110 L310,40 L360,40 L360,90 L410,90 L410,20 L480,20 L480,100 L540,100 L540,50 L590,50 L590,120 L650,120 L650,70 L720,70 L720,130 L780,130 L780,40 L850,40 L850,90 L920,90 L920,140 L1000,140 L1000,200 Z'/%3E%3C/svg%3E");
+    --input-focus: #3b82f6;
+    --skyline-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200' preserveAspectRatio='none'%3E%3Cpath fill='%233b82f6' fill-opacity='0.08' d='M0,200 L0,150 L30,150 L30,110 L70,110 L70,160 L120,160 L120,80 L160,80 L160,130 L210,130 L210,60 L260,60 L260,110 L310,110 L310,40 L360,40 L360,90 L410,90 L410,20 L480,20 L480,100 L540,100 L540,50 L590,50 L590,120 L650,120 L650,70 L720,70 L720,130 L780,130 L780,40 L850,40 L850,90 L920,90 L920,140 L1000,140 L1000,200 Z'/%3E%3C/svg%3E");
 }
 
 * {
@@ -255,6 +255,49 @@ input:focus {
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 10px 20px -10px var(--accent-glow);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+}
+
+.input-wrapper > i.ph {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.input-wrapper input {
+    flex-grow: 1;
+}
+
+.btn-square {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    width: 3.2rem;
+    height: 3.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.4rem;
+    transition: all 0.3s;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px -2px var(--accent-glow);
+}
+
+.btn-square:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
 }
 
 /* Stats Panel */

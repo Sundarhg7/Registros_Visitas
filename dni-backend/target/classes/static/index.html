@@ -44,12 +44,17 @@
 
                 <form id="registrationForm">
                     <div class="input-group search-group">
-                        <label for="dni">Número de DNI</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="dni">Número de DNI</label>
+                            <label style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                                <input type="checkbox" id="manualMode" style="width: 1rem; height: 1rem; padding: 0;"> Ingreso Manual
+                            </label>
+                        </div>
                         <div class="input-wrapper">
                             <i class="ph ph-identification-card"></i>
                             <input type="text" id="dni" placeholder="Ej. 12345678" maxlength="8" autocomplete="off"
                                 required>
-                            <button type="button" id="searchBtn" class="btn-icon" title="Buscar DNI">
+                            <button type="button" id="searchBtn" class="btn-square" title="Buscar DNI">
                                 <i class="ph ph-magnifying-glass"></i>
                             </button>
                         </div>
@@ -78,6 +83,14 @@
                         <div class="input-wrapper">
                             <i class="ph ph-door"></i>
                             <input type="text" id="departamento" placeholder="Ej. 402B" autocomplete="off" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="observaciones">Observaciones / Motivo</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-chat-centered-text"></i>
+                            <input type="text" id="observaciones" placeholder="Ej. Trae paquete de Mercado Libre" autocomplete="off">
                         </div>
                     </div>
 
@@ -117,12 +130,12 @@
 
                 <div class="list-header">
                     <h2>Registros Históricos</h2>
-                    <div class="list-actions">
-                        <button type="button" id="btnExport" class="btn-secondary" title="Descargar Reporte (CSV)">
+                    <div class="list-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha" style="flex-grow: 1; padding-left: 1rem;">
+                        <button type="button" id="btnExport" class="btn-square" title="Descargar Reporte">
                             <i class="ph ph-download-simple"></i>
                         </button>
-                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha">
-                        <span class="badge" id="visitCount">0</span>
+                        <span class="badge" id="visitCount" style="margin-left: auto;">0</span>
                     </div>
                 </div>
 

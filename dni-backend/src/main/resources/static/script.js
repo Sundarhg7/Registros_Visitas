@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statTotal = document.getElementById('statTotal');
     const statPeak = document.getElementById('statPeak');
     const statLast = document.getElementById('statLast');
+    const manualModeCheck = document.getElementById('manualMode');
 
     // Theme Toggle Logic
     if (themeToggleBtn) {
@@ -109,6 +110,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     searchBtn.addEventListener('click', searchDni);
     dniInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchDni(); } });
+    
+    // Auto-búsqueda
+    dniInput.addEventListener('input', () => {
+        if (!manualModeCheck || !manualModeCheck.checked) {
+            const val = dniInput.value.trim();
+            if (val.length === 8) {
+                searchDni();
+            }
+        }
+    });
+
+    // Ingreso Manual Toggle
+    if (manualModeCheck) {
+        manualModeCheck.addEventListener('change', (e) => {
+            const isManual = e.target.checked;
+            if (isManual) {
+                dniInput.removeAttribute('maxlength');
+                nombreInput.removeAttribute('readonly');
+                apellidoInput.removeAttribute('readonly');
+                if (nombreInput.parentElement.classList.contains('disabled')) {
+                    nombreInput.parentElement.classList.remove('disabled');
+                }
+                if (apellidoInput.parentElement.classList.contains('disabled')) {
+                    apellidoInput.parentElement.classList.remove('disabled');
+                }
+            } else {
+                dniInput.setAttribute('maxlength', '8');
+                nombreInput.setAttribute('readonly', 'true');
+                apellidoInput.setAttribute('readonly', 'true');
+                nombreInput.parentElement.classList.add('disabled');
+                apellidoInput.parentElement.classList.add('disabled');
+            }
+        });
+    }
     
     // Filtro de fecha
     if (filterDateInput) {
