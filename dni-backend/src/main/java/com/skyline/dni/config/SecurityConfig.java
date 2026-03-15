@@ -33,20 +33,20 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Deshabilitamos CSRF para simplificar las llamadas REST por el momento
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/personas/**").authenticated()
-                .requestMatchers("/login.html", "/style.css", "/script.js", "/favicon.svg").permitAll() // Habilitamos los assets de la UI y el login
+                .requestMatchers("/login", "/style.css", "/script.js", "/favicon.svg").permitAll() // Habilitamos los assets de la UI y la ruta limpia del login
                 .requestMatchers("/", "/index.html").authenticated() // Protegemos el frontend principal estático
                 .anyRequest().permitAll()
             )
             .formLogin(form -> form
-                .loginPage("/login.html")
+                .loginPage("/login") // Usa la ruta limpia conectada al LoginController
                 .loginProcessingUrl("/login")
                 .defaultSuccessUrl("/", true) // Redirige a raiz tras login exitoso
-                .failureUrl("/login.html?error=true")
+                .failureUrl("/login?error=true") // Usa la ruta limpia para el error
                 .permitAll()
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login.html?logout=true")
+                .logoutSuccessUrl("/login?logout=true") // Usa la ruta limpia para el logout
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .permitAll()
