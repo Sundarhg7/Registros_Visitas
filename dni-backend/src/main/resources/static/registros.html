@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Visitas | {SHG}</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <div class="shg-logo">{SHG}</div>
+                <h1>Historial</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-link"><i class="ph ph-house"></i> Principal</a>
+                <a href="/registros" class="nav-link active"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
+                <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
+            </nav>
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-icon-header" title="Cambiar Tema">
+                    <i class="ph ph-moon"></i>
+                </button>
+                <div class="time-widget" id="timeWidget">--:--</div>
+                <a href="/logout" class="btn-logout" title="Cerrar Sessión">
+                    <i class="ph ph-sign-out"></i>
+                </a>
+            </div>
+        </header>
+
+        <main class="dashboard" style="grid-template-columns: 1fr;">
+            <!-- Única Columna: Lista y Filtros -->
+            <section class="glass-panel list-section">
+                <!-- Stats Panel -->
+                <div class="stats-panel" id="statsPanel" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="ph ph-users"></i></div>
+                        <div class="stat-details">
+                            <span class="stat-label">Total Visitas</span>
+                            <span class="stat-value" id="statTotal">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-header">
+                    <h2>Auditoría de Registros</h2>
+                    <div class="list-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha" style="flex-grow: 1; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                        <button type="button" id="btnExport" class="btn-square" title="Descargar Reporte en Excel">
+                            <i class="ph ph-download-simple"></i>
+                        </button>
+                        <span class="badge" id="visitCount" style="margin-left: auto;">0</span>
+                    </div>
+                </div>
+
+                <div class="visit-list" id="visitList" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                    <!-- Cards will be injected here -->
+                    <div class="empty-state">
+                        <i class="ph ph-users-three"></i>
+                        <p>No hay visitas registradas para esta fecha.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="registros.js"></script>
+</body>
+</html>

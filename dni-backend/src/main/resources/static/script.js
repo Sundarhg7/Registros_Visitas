@@ -12,9 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const visitList = document.getElementById('visitList');
     const visitCount = document.getElementById('visitCount');
     const registerBtn = document.getElementById('registerBtn');
-    const filterDateInput = document.getElementById('filterDate');
     const themeToggleBtn = document.getElementById('themeToggle');
-    const btnExport = document.getElementById('btnExport');
     const statTotal = document.getElementById('statTotal');
     const statPeak = document.getElementById('statPeak');
     const statLast = document.getElementById('statLast');
@@ -36,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let visits = [];
     let isFetching = false;
     const today = new Date().toISOString().split('T')[0];
-    if (filterDateInput) filterDateInput.value = today;
 
     // Reloj
     setInterval(() => {
@@ -122,33 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Ingreso Manual Toggle
-    if (manualModeCheck) {
-        manualModeCheck.addEventListener('change', (e) => {
-            const isManual = e.target.checked;
-            if (isManual) {
-                dniInput.removeAttribute('maxlength');
-                nombreInput.removeAttribute('readonly');
-                apellidoInput.removeAttribute('readonly');
-                if (nombreInput.parentElement.classList.contains('disabled')) {
-                    nombreInput.parentElement.classList.remove('disabled');
-                }
-                if (apellidoInput.parentElement.classList.contains('disabled')) {
-                    apellidoInput.parentElement.classList.remove('disabled');
-                }
-            } else {
-                dniInput.setAttribute('maxlength', '8');
-                nombreInput.setAttribute('readonly', 'true');
-                apellidoInput.setAttribute('readonly', 'true');
-                nombreInput.parentElement.classList.add('disabled');
-                apellidoInput.parentElement.classList.add('disabled');
-            }
-        });
-    }
-    
-    // Filtro de fecha
-    if (filterDateInput) {
-        filterDateInput.addEventListener('change', (e) => fetchHistory(e.target.value));
-    }
 
     // Registro
     registerForm.addEventListener('submit', async (e) => {
@@ -171,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                fetchHistory(filterDateInput.value); 
+                fetchHistory(today); 
                 registerForm.reset();
                 dniHelper.classList.remove('visible');
                 registerBtn.innerHTML = '<i class="ph ph-check-circle"></i> ¡Hecho!';
@@ -179,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) { registerBtn.disabled = false; }
     });
+
+    // Render List
 
     // Render List
     const updateList = () => {
@@ -209,23 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         visitList.appendChild(fragment);
     };
-
-    // Exportar a Excel (Restaurado)
-    if (btnExport) {
-        btnExport.addEventListener('click', () => {
-            if (visits.length === 0) return;
-            let tableHtml = `<html><head><meta charset="utf-8"></head><body><table border="1"><tr><th>DNI</th><th>Nombre</th><th>Dpto</th><th>Observaciones</th><th>Fecha</th><th>Hora</th></tr>`;
-            visits.forEach(v => {
-                tableHtml += `<tr><td style='mso-number-format:"\\@";'>${v.dni}</td><td>${v.nombreCompleto}</td><td>${v.depto}</td><td>${v.obs}</td><td>${v.timestamp.toLocaleDateString()}</td><td>${v.timestamp.toLocaleTimeString()}</td></tr>`;
-            });
-            tableHtml += `</table></body></html>`;
-            const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Reporte.xls`;
-            link.click();
-        });
-    }
 
     // Iniciar
     fetchHistory(today);

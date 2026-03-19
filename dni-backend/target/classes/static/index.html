@@ -25,6 +25,11 @@
                 <div class="shg-logo">{SHG}</div>
                 <h1>Panel</h1>
             </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-link active"><i class="ph ph-house"></i> Principal</a>
+                <a href="/registros" class="nav-link"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
+                <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
+            </nav>
             <div class="header-actions">
                 <button id="themeToggle" class="btn-icon-header" title="Cambiar Tema">
                     <i class="ph ph-moon"></i>
@@ -129,12 +134,8 @@
                 </div>
 
                 <div class="list-header">
-                    <h2>Registros Históricos</h2>
+                    <h2>Visitas de Hoy</h2>
                     <div class="list-actions" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha" style="flex-grow: 1; padding-left: 1rem;">
-                        <button type="button" id="btnExport" class="btn-square" title="Descargar Reporte">
-                            <i class="ph ph-download-simple"></i>
-                        </button>
                         <span class="badge" id="visitCount" style="margin-left: auto;">0</span>
                     </div>
                 </div>
