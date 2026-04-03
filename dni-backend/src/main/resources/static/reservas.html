@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Áreas Comunes | {SHG}</title>
+    <meta name="description" content="Sistema de reservas de áreas comunes: Zona de Parrillas, SUM, Gimnasio y Piscina.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <div class="shg-logo">{SHG}</div>
+                <h1>Reservas</h1>
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-link"><i class="ph ph-house"></i> Principal</a>
+                <a href="/registros" class="nav-link"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
+                <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
+                <a href="/reservas" class="nav-link active"><i class="ph ph-calendar-check"></i> Reservas</a>
+            </nav>
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-icon-header" title="Cambiar Tema">
+                    <i class="ph ph-moon"></i>
+                </button>
+                <div class="time-widget" id="timeWidget">--:--</div>
+                <a href="/logout" class="btn-logout" title="Cerrar Sessión">
+                    <i class="ph ph-sign-out"></i>
+                </a>
+            </div>
+        </header>
+
+        <main class="dashboard" style="grid-template-columns: 1fr 1.3fr; gap: 2rem;">
+
+            <!-- Left Column: Form -->
+            <section class="glass-panel form-section" style="align-self: start;">
+                <h2 style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                    <i class="ph ph-calendar-plus ph-fill" style="color: var(--accent-color);"></i>
+                    Nueva Reserva
+                </h2>
+                <p class="subtitle">Complete los datos para reservar un área común</p>
+
+                <form id="reservaForm">
+                    <!-- Área -->
+                    <div class="input-group">
+                        <label for="areaNombre">Área a Reservar</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-buildings"></i>
+                            <select id="areaNombre" required class="reserva-select">
+                                <option value="" disabled selected>Seleccione un área...</option>
+                                <option value="Zona de Parrillas">🔥 Zona de Parrillas</option>
+                                <option value="Sala de Usos Múltiples (SUM)">🎭 Sala de Usos Múltiples (SUM)</option>
+                                <option value="Gimnasio">💪 Gimnasio</option>
+                                <option value="Piscina">🏊 Piscina</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Residente y departamento -->
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="residenteNombre">Residente</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-user"></i>
+                                <input type="text" id="residenteNombre" placeholder="Nombre completo" autocomplete="off" required>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="departamento">Departamento</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-door"></i>
+                                <input type="text" id="departamento" placeholder="Ej. 402B" autocomplete="off" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="input-group">
+                        <label for="fecha">Fecha</label>
+                        <div class="input-wrapper">
+                            <i class="ph ph-calendar"></i>
+                            <input type="date" id="fecha" required>
+                        </div>
+                    </div>
+
+                    <!-- Horario -->
+                    <div class="row">
+                        <div class="input-group">
+                            <label for="horaInicio">Hora de Inicio</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-clock"></i>
+                                <input type="time" id="horaInicio" required>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="horaFin">Hora de Fin</label>
+                            <div class="input-wrapper">
+                                <i class="ph ph-clock-countdown"></i>
+                                <input type="time" id="horaFin" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerta de conflicto -->
+                    <div id="conflictAlert" class="conflict-alert" style="display:none;">
+                        <i class="ph ph-warning-octagon ph-fill"></i>
+                        <span id="conflictMsg"></span>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="btnGuardar">
+                        <i class="ph ph-check-circle"></i>
+                        Confirmar Reserva
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Column: Today's reservations -->
+            <section class="glass-panel list-section">
+                <div class="list-header" style="margin-bottom: 1.5rem;">
+                    <h2>Reservas del Día</h2>
+                    <div class="list-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="date" id="filterDate" title="Filtrar por fecha"
+                            style="padding: 0.6rem 1rem; border-radius: 10px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                        <span class="badge" id="reservaCount"
+                            style="background: var(--accent-glow); color: var(--accent-color); padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: 600;">0</span>
+                    </div>
+                </div>
+
+                <!-- Area filter pills -->
+                <div id="areaPills" class="area-pills">
+                    <button class="pill active" data-area="all">Todas</button>
+                    <button class="pill" data-area="Zona de Parrillas">🔥 Parrillas</button>
+                    <button class="pill" data-area="Sala de Usos Múltiples (SUM)">🎭 SUM</button>
+                    <button class="pill" data-area="Gimnasio">💪 Gimnasio</button>
+                    <button class="pill" data-area="Piscina">🏊 Piscina</button>
+                </div>
+
+                <div id="reservasList" style="display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1.2rem;">
+                    <!-- Cards injected here -->
+                    <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                        <i class="ph ph-calendar-x" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary); display: block;"></i>
+                        <p>No hay reservas para este día.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <style>
+        /* ── Select estilizado igual que los inputs ─────────── */
+        .reserva-select {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            color: var(--text-primary);
+            font-size: 1rem;
+            appearance: none;
+            outline: none;
+            transition: all 0.3s;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .reserva-select:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* ── Alerta de conflicto ────────────────────────────── */
+        .conflict-alert {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 0.9rem 1.1rem;
+            color: #ef4444;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+        .conflict-alert i { font-size: 1.4rem; flex-shrink: 0; }
+
+        /* ── Pills de filtro por área ─────────────────────── */
+        .area-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .pill {
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .pill:hover { border-color: var(--accent-color); color: var(--accent-color); }
+        .pill.active {
+            background: var(--accent-glow);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* ── Tarjeta de reserva ─────────────────────────────── */
+        .reserva-card {
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 1.1rem 1.3rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.25s;
+        }
+        .reserva-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+        }
+        .rc-area {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .rc-meta { font-size: 0.85rem; color: var(--text-secondary); }
+        .rc-horario {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            white-space: nowrap;
+            text-align: center;
+        }
+        .rc-time-label { font-size: 0.7rem; color: var(--text-secondary); display: block; text-align: center; margin-top: 2px; }
+
+        /* Colores por área */
+        .area-parrillas  { border-left-color: #f97316; }
+        .area-sum        { border-left-color: #a855f7; }
+        .area-gimnasio   { border-left-color: #10b981; }
+        .area-piscina    { border-left-color: #3b82f6; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <script src="reservas.js"></script>
+</body>
+
+</html>

@@ -20,4 +20,9 @@ public class WebController {
     public String ocurrencias() {
         return "ocurrencias.html";
     }
+
+    @GetMapping("/reservas")
+    public String reservas() {
+        return "reservas.html";
+    }
 }
