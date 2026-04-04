@@ -89,9 +89,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const data = await fetchDniData(dniValue);
+            
+            // Si la API devolvió datos pero sin nombres (fallo silencioso)
+            if (!data.nombres || data.nombres.trim() === '') {
+                nombreInput.value = '';
+                apellidoInput.value = '';
+                showHelper('DNI consultado, pero el nombre no está disponible. Active "Ingreso Manual" para escribirlo.', true);
+                // Activar automáticamente el modo manual para facilitar el flujo
+                if (manualModeCheck && !manualModeCheck.checked) {
+                    manualModeCheck.checked = true;
+                    manualModeCheck.dispatchEvent(new Event('change'));
+                }
+                return;
+            }
+            
             nombreInput.value = data.nombres;
             apellidoInput.value = data.apellidos;
-            showHelper("Datos verificados", false);
+            showHelper("✓ Datos verificados", false);
             dniHelper.style.color = "var(--success-color)";
             deptoInput.focus();
         } catch (error) {
@@ -119,7 +133,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Ingreso Manual Toggle
+    if (manualModeCheck) {
+        const nombreWrapper = nombreInput.closest('.input-wrapper');
+        const apellidoWrapper = apellidoInput.closest('.input-wrapper');
 
+        manualModeCheck.addEventListener('change', () => {
+            const isManual = manualModeCheck.checked;
+
+            if (isManual) {
+                // Habilitar campos de nombre y apellido
+                nombreInput.removeAttribute('readonly');
+                apellidoInput.removeAttribute('readonly');
+                nombreWrapper.classList.remove('disabled');
+                apellidoWrapper.classList.remove('disabled');
+                // Deshabilitar botón de búsqueda (no aplica en modo manual)
+                searchBtn.disabled = true;
+                searchBtn.style.opacity = '0.4';
+                showHelper('Modo manual activo: ingrese nombre y apellido.', false);
+                dniHelper.style.color = 'var(--text-secondary)';
+                nombreInput.focus();
+            } else {
+                // Restaurar modo automático
+                nombreInput.setAttribute('readonly', true);
+                apellidoInput.setAttribute('readonly', true);
+                nombreWrapper.classList.add('disabled');
+                apellidoWrapper.classList.add('disabled');
+                searchBtn.disabled = false;
+                searchBtn.style.opacity = '';
+                dniHelper.classList.remove('visible');
+            }
+        });
+    }
     // Registro
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();

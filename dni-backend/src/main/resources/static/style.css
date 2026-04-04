@@ -99,6 +99,22 @@ body::after {
     background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
 }
 
+/* Logo como imagen PNG */
+.shg-logo-img {
+    height: 48px;
+    width: auto;
+    max-width: 120px;
+    border-radius: 10px;
+    object-fit: contain;
+    box-shadow: 0 4px 15px -3px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shg-logo-img:hover {
+    transform: scale(1.04);
+    box-shadow: 0 6px 20px -4px rgba(0,0,0,0.2);
+}
+
 .app-container {
     width: 100%;
     max-width: 1200px;

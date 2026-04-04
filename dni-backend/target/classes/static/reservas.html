@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reserva de Áreas Comunes | {SHG}</title>
-    <meta name="description" content="Sistema de reservas de áreas comunes: Zona de Parrillas, SUM, Gimnasio y Piscina.">
+    <title>Reserva de Áreas Comunes | SHG</title>
+    <meta name="description"
+        content="Sistema de reservas de áreas comunes: Sala Estar, Sala de Trabajo, Poker, Fulbito, Gimnasio, Parrilla, SUM, Zona Gourmet y Sala de Niños.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -16,17 +17,313 @@
             document.documentElement.classList.add('dark-theme');
         }
     </script>
+    <style>
+        /* ── Area selector grid ─────────────────────────── */
+        .area-selector-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .area-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.65rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .area-tile {
+            background: var(--input-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 0.8rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(.34, 1.56, .64, 1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .area-tile:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px -4px var(--accent-glow);
+        }
+
+        .area-tile.selected {
+            border-color: var(--accent-color);
+            background: var(--accent-glow);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .area-tile.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .area-tile-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .area-tile-name {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        /* ── Image preview panel ────────────────────────── */
+        .area-preview {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            position: relative;
+            aspect-ratio: 16/7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .area-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            display: block;
+        }
+
+        .area-preview img.loading {
+            opacity: 0;
+            transform: scale(1.04);
+        }
+
+        .area-preview img.loaded {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .area-preview-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .area-preview-placeholder i {
+            font-size: 2.5rem;
+            opacity: 0.4;
+        }
+
+        .area-preview-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.8rem 1.2rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .area-preview:has(img.loaded) .area-preview-name {
+            opacity: 1;
+        }
+
+        .area-preview:has(img.loaded) .area-preview-placeholder {
+            display: none;
+        }
+
+        /* ── Select oculto (valor para el form) ─────────── */
+        #areaNombreHidden {
+            display: none;
+        }
+
+        /* ── Conflict alert ─────────────────────────────── */
+        .conflict-alert {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 0.9rem 1.1rem;
+            color: #ef4444;
+            font-size: 0.9rem;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .conflict-alert i {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Pills de filtro ────────────────────────────── */
+        .area-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .pill {
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .pill:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .pill.active {
+            background: var(--accent-glow);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* ── Reserva card ───────────────────────────────── */
+        .reserva-card {
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 1.1rem 1.3rem;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.25s;
+        }
+
+        .reserva-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        .rc-area {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .rc-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .rc-horario {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .rc-time-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: block;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        /* Color accent por área */
+        .area-sala-estar {
+            border-left-color: #10b981;
+        }
+
+        .area-sala-trabajo {
+            border-left-color: #3b82f6;
+        }
+
+        .area-sala-poker {
+            border-left-color: #8b5cf6;
+        }
+
+        .area-sala-fulbito {
+            border-left-color: #22c55e;
+        }
+
+        .area-gimnasio {
+            border-left-color: #f97316;
+        }
+
+        .area-parrilla {
+            border-left-color: #ef4444;
+        }
+
+        .area-sala-sum {
+            border-left-color: #a855f7;
+        }
+
+        .area-zona-gourmet {
+            border-left-color: #f59e0b;
+        }
+
+        .area-sala-ninos {
+            border-left-color: #ec4899;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
-                <div class="shg-logo">{SHG}</div>
-                <h1>Reservas</h1>
+                <img src="/images/logo-shg.png" class="shg-logo-img" alt="SHG Logo"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="shg-logo" style="display:none;">{SHG}</div>
             </div>
             <nav class="main-nav">
                 <a href="/" class="nav-link"><i class="ph ph-house"></i> Principal</a>
+                <a href="/visitas" class="nav-link"><i class="ph ph-user-plus"></i> Registros</a>
                 <a href="/registros" class="nav-link"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
                 <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
                 <a href="/reservas" class="nav-link active"><i class="ph ph-calendar-check"></i> Reservas</a>
@@ -36,13 +333,13 @@
                     <i class="ph ph-moon"></i>
                 </button>
                 <div class="time-widget" id="timeWidget">--:--</div>
-                <a href="/logout" class="btn-logout" title="Cerrar Sessión">
+                <a href="/logout" class="btn-logout" title="Cerrar Sesión">
                     <i class="ph ph-sign-out"></i>
                 </a>
             </div>
         </header>
 
-        <main class="dashboard" style="grid-template-columns: 1fr 1.3fr; gap: 2rem;">
+        <main class="dashboard" style="grid-template-columns: 1fr 1.35fr; gap: 2rem;">
 
             <!-- Left Column: Form -->
             <section class="glass-panel form-section" style="align-self: start;">
@@ -50,22 +347,77 @@
                     <i class="ph ph-calendar-plus ph-fill" style="color: var(--accent-color);"></i>
                     Nueva Reserva
                 </h2>
-                <p class="subtitle">Complete los datos para reservar un área común</p>
+                <p class="subtitle">Seleccione un área y complete los datos</p>
 
                 <form id="reservaForm">
-                    <!-- Área -->
+
+                    <!-- Selector visual de área -->
                     <div class="input-group">
-                        <label for="areaNombre">Área a Reservar</label>
-                        <div class="input-wrapper">
-                            <i class="ph ph-buildings"></i>
-                            <select id="areaNombre" required class="reserva-select">
-                                <option value="" disabled selected>Seleccione un área...</option>
-                                <option value="Zona de Parrillas">🔥 Zona de Parrillas</option>
-                                <option value="Sala de Usos Múltiples (SUM)">🎭 Sala de Usos Múltiples (SUM)</option>
-                                <option value="Gimnasio">💪 Gimnasio</option>
-                                <option value="Piscina">🏊 Piscina</option>
-                            </select>
+                        <span class="area-selector-label">Área a Reservar</span>
+
+                        <!-- Preview de imagen -->
+                        <div class="area-preview" id="areaPreview">
+                            <div class="area-preview-placeholder">
+                                <i class="ph ph-image"></i>
+                                <span>Seleccione un área para ver la imagen</span>
+                            </div>
+                            <img id="areaPreviewImg" src="" alt="" class="loading" style="display:none;">
+                            <div class="area-preview-name" id="areaPreviewName"></div>
                         </div>
+
+                        <!-- Grid de tiles -->
+                        <div class="area-grid" id="areaGrid">
+                            <button type="button" class="area-tile" data-area="Sala Estar"
+                                data-img="/images/sala estar.jpg">
+                                <span class="area-tile-icon">🛋️</span>
+                                <span class="area-tile-name">Sala Estar</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Sala de Trabajo"
+                                data-img="/images/sala de trabajo.jpg">
+                                <span class="area-tile-icon">💼</span>
+                                <span class="area-tile-name">Sala de Trabajo</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Sala de Poker"
+                                data-img="/images/sala poker.jpg">
+                                <span class="area-tile-icon">🃏</span>
+                                <span class="area-tile-name">Sala de Poker</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Sala de Fulbito"
+                                data-img="/images/sala fulbito.jpg">
+                                <span class="area-tile-icon">⚽</span>
+                                <span class="area-tile-name">Sala Fulbito</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Gimnasio"
+                                data-img="/images/gimnasio.jpg">
+                                <span class="area-tile-icon">💪</span>
+                                <span class="area-tile-name">Gimnasio</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Parrilla"
+                                data-img="/images/parrilla.jpg">
+                                <span class="area-tile-icon">🔥</span>
+                                <span class="area-tile-name">Parrilla</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Sala SUM"
+                                data-img="/images/sala sum.jpg">
+                                <span class="area-tile-icon">🎭</span>
+                                <span class="area-tile-name">Sala SUM</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Zona Gourmet"
+                                data-img="/images/zona gourmet.jpg">
+                                <span class="area-tile-icon">🍽️</span>
+                                <span class="area-tile-name">Zona Gourmet</span>
+                            </button>
+                            <button type="button" class="area-tile" data-area="Sala de Niños"
+                                data-img="/images/sala de ninos.jpg">
+                                <span class="area-tile-icon">🧸</span>
+                                <span class="area-tile-name">Sala de Niños</span>
+                            </button>
+                        </div>
+
+                        <!-- Campo oculto con el valor del área -->
+                        <input type="hidden" id="areaNombre" name="areaNombre" required>
+                        <span id="areaHelper" style="font-size:0.8rem; color:#ef4444; display:none;">Por favor,
+                            seleccione un área.</span>
                     </div>
 
                     <!-- Residente y departamento -->
@@ -74,7 +426,8 @@
                             <label for="residenteNombre">Residente</label>
                             <div class="input-wrapper">
                                 <i class="ph ph-user"></i>
-                                <input type="text" id="residenteNombre" placeholder="Nombre completo" autocomplete="off" required>
+                                <input type="text" id="residenteNombre" placeholder="Nombre completo" autocomplete="off"
+                                    required>
                             </div>
                         </div>
                         <div class="input-group">
@@ -141,132 +494,27 @@
                 <!-- Area filter pills -->
                 <div id="areaPills" class="area-pills">
                     <button class="pill active" data-area="all">Todas</button>
-                    <button class="pill" data-area="Zona de Parrillas">🔥 Parrillas</button>
-                    <button class="pill" data-area="Sala de Usos Múltiples (SUM)">🎭 SUM</button>
+                    <button class="pill" data-area="Sala Estar">🛋️ Estar</button>
+                    <button class="pill" data-area="Sala de Trabajo">💼 Trabajo</button>
+                    <button class="pill" data-area="Sala de Poker">🃏 Poker</button>
+                    <button class="pill" data-area="Sala de Fulbito">⚽ Fulbito</button>
                     <button class="pill" data-area="Gimnasio">💪 Gimnasio</button>
-                    <button class="pill" data-area="Piscina">🏊 Piscina</button>
+                    <button class="pill" data-area="Parrilla">🔥 Parrilla</button>
+                    <button class="pill" data-area="Sala SUM">🎭 SUM</button>
+                    <button class="pill" data-area="Zona Gourmet">🍽️ Gourmet</button>
+                    <button class="pill" data-area="Sala de Niños">🧸 Niños</button>
                 </div>
 
                 <div id="reservasList" style="display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1.2rem;">
-                    <!-- Cards injected here -->
                     <div class="empty-state" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                        <i class="ph ph-calendar-x" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary); display: block;"></i>
+                        <i class="ph ph-calendar-x"
+                            style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-secondary); display: block;"></i>
                         <p>No hay reservas para este día.</p>
                     </div>
                 </div>
             </section>
         </main>
     </div>
-
-    <style>
-        /* ── Select estilizado igual que los inputs ─────────── */
-        .reserva-select {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 12px;
-            padding: 0.875rem 1rem 0.875rem 3rem;
-            color: var(--text-primary);
-            font-size: 1rem;
-            appearance: none;
-            outline: none;
-            transition: all 0.3s;
-            font-family: inherit;
-            cursor: pointer;
-        }
-        .reserva-select:focus {
-            border-color: var(--input-focus);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        /* ── Alerta de conflicto ────────────────────────────── */
-        .conflict-alert {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            padding: 0.9rem 1.1rem;
-            color: #ef4444;
-            font-size: 0.9rem;
-            font-weight: 500;
-            animation: fadeIn 0.3s ease;
-        }
-        .conflict-alert i { font-size: 1.4rem; flex-shrink: 0; }
-
-        /* ── Pills de filtro por área ─────────────────────── */
-        .area-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .pill {
-            background: var(--input-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 20px;
-            padding: 0.35rem 0.85rem;
-            font-size: 0.82rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .pill:hover { border-color: var(--accent-color); color: var(--accent-color); }
-        .pill.active {
-            background: var(--accent-glow);
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-
-        /* ── Tarjeta de reserva ─────────────────────────────── */
-        .reserva-card {
-            background: var(--input-bg);
-            border: 1px solid var(--panel-border);
-            border-left: 4px solid var(--accent-color);
-            border-radius: 12px;
-            padding: 1.1rem 1.3rem;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.25s;
-        }
-        .reserva-card:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.07);
-        }
-        .rc-area {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-        .rc-meta { font-size: 0.85rem; color: var(--text-secondary); }
-        .rc-horario {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 10px;
-            padding: 0.4rem 0.85rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--accent-color);
-            white-space: nowrap;
-            text-align: center;
-        }
-        .rc-time-label { font-size: 0.7rem; color: var(--text-secondary); display: block; text-align: center; margin-top: 2px; }
-
-        /* Colores por área */
-        .area-parrillas  { border-left-color: #f97316; }
-        .area-sum        { border-left-color: #a855f7; }
-        .area-gimnasio   { border-left-color: #10b981; }
-        .area-piscina    { border-left-color: #3b82f6; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 
     <script src="reservas.js"></script>
 </body>

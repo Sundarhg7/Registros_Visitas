@@ -1,16 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ─── DOM References ───────────────────────────────────────
-    const timeWidget     = document.getElementById('timeWidget');
-    const themeToggleBtn = document.getElementById('themeToggle');
-    const form           = document.getElementById('reservaForm');
-    const btnGuardar     = document.getElementById('btnGuardar');
-    const conflictAlert  = document.getElementById('conflictAlert');
-    const conflictMsg    = document.getElementById('conflictMsg');
-    const reservasList   = document.getElementById('reservasList');
-    const reservaCount   = document.getElementById('reservaCount');
+    const timeWidget      = document.getElementById('timeWidget');
+    const themeToggleBtn  = document.getElementById('themeToggle');
+    const form            = document.getElementById('reservaForm');
+    const btnGuardar      = document.getElementById('btnGuardar');
+    const conflictAlert   = document.getElementById('conflictAlert');
+    const conflictMsg     = document.getElementById('conflictMsg');
+    const reservasList    = document.getElementById('reservasList');
+    const reservaCount    = document.getElementById('reservaCount');
     const filterDateInput = document.getElementById('filterDate');
-    const areaPills      = document.querySelectorAll('.pill');
+    const areaPills       = document.querySelectorAll('.pill');
+
+    // ─── Area image preview references ───────────────────────
+    const areaGrid        = document.getElementById('areaGrid');
+    const areaTiles       = areaGrid.querySelectorAll('.area-tile');
+    const areaPreviewImg  = document.getElementById('areaPreviewImg');
+    const areaPreviewName = document.getElementById('areaPreviewName');
+    const areaNombreInput = document.getElementById('areaNombre');
+    const areaHelper      = document.getElementById('areaHelper');
 
     // ─── Theme Toggle ─────────────────────────────────────────
     if (themeToggleBtn) {
@@ -37,19 +45,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     let allReservas = [];
     let activeArea  = 'all';
+    let selectedArea = null;
 
-    // ─── Set default date values ──────────────────────────────
+    // ─── Default dates ────────────────────────────────────────
     document.getElementById('fecha').value = today;
     filterDateInput.value = today;
 
-    // ─── Area color map ───────────────────────────────────────
-    const areaClass = (area) => {
-        if (area.includes('Parrillas')) return 'area-parrillas';
-        if (area.includes('SUM'))       return 'area-sum';
-        if (area.includes('Gimnasio'))  return 'area-gimnasio';
-        if (area.includes('Piscina'))   return 'area-piscina';
-        return '';
+    // ─── Area color map (for reserva cards) ──────────────────
+    const areaColorClass = (area) => {
+        const map = {
+            'Sala Estar':       'area-sala-estar',
+            'Sala de Trabajo':  'area-sala-trabajo',
+            'Sala de Poker':    'area-sala-poker',
+            'Sala de Fulbito':  'area-sala-fulbito',
+            'Gimnasio':         'area-gimnasio',
+            'Parrilla':         'area-parrilla',
+            'Sala SUM':         'area-sala-sum',
+            'Zona Gourmet':     'area-zona-gourmet',
+            'Sala de Niños':    'area-sala-ninos',
+        };
+        return map[area] || '';
     };
+
+    // ─── Area tile click: select + show image preview ─────────
+    areaTiles.forEach(tile => {
+        tile.addEventListener('click', () => {
+            // Deselect all tiles
+            areaTiles.forEach(t => t.classList.remove('selected'));
+            // Select this tile
+            tile.classList.add('selected');
+
+            const areaName = tile.dataset.area;
+            const imgSrc   = tile.dataset.img;
+
+            selectedArea = areaName;
+            areaNombreInput.value = areaName;
+            areaHelper.style.display = 'none';
+
+            // Update image preview with fade animation
+            areaPreviewImg.classList.remove('loaded');
+            areaPreviewImg.classList.add('loading');
+            areaPreviewImg.style.display = 'block';
+            areaPreviewName.textContent = areaName;
+
+            // Load image
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                areaPreviewImg.src = imgSrc;
+                areaPreviewImg.alt = areaName;
+                // Trigger CSS transition
+                requestAnimationFrame(() => {
+                    areaPreviewImg.classList.remove('loading');
+                    areaPreviewImg.classList.add('loaded');
+                });
+            };
+            tempImg.onerror = () => {
+                // If image fails, show a placeholder with area name
+                areaPreviewImg.style.display = 'none';
+            };
+            tempImg.src = imgSrc;
+        });
+    });
 
     // ─── Fetch reservas ───────────────────────────────────────
     const fetchReservas = async (dateStr) => {
@@ -85,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const frag = document.createDocumentFragment();
         filtered.forEach(r => {
             const card = document.createElement('div');
-            card.className = `reserva-card ${areaClass(r.areaNombre)}`;
+            card.className = `reserva-card ${areaColorClass(r.areaNombre)}`;
             card.innerHTML = `
                 <div>
                     <div class="rc-area">${r.areaNombre}</div>
@@ -135,8 +191,15 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         conflictAlert.style.display = 'none';
 
+        // Validate area selected
+        if (!areaNombreInput.value) {
+            areaHelper.style.display = 'block';
+            areaGrid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         const payload = {
-            areaNombre:      document.getElementById('areaNombre').value,
+            areaNombre:      areaNombreInput.value,
             residenteNombre: document.getElementById('residenteNombre').value.trim(),
             departamento:    document.getElementById('departamento').value.trim(),
             fecha:           document.getElementById('fecha').value,
@@ -165,7 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 // Éxito
                 form.reset();
+                areaNombreInput.value = '';
+                areaTiles.forEach(t => t.classList.remove('selected'));
+                areaPreviewImg.style.display = 'none';
+                areaPreviewImg.classList.remove('loaded');
+                areaPreviewName.textContent = '';
                 document.getElementById('fecha').value = today;
+                selectedArea = null;
+
                 btnGuardar.innerHTML = '<i class="ph ph-check-circle"></i> ¡Reserva Confirmada!';
                 btnGuardar.style.background = 'var(--success-color)';
                 setTimeout(() => {
@@ -174,12 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnGuardar.disabled = false;
                 }, 2500);
 
-                // Refrescar lista si el filtro está en la misma fecha
                 if (filterDateInput.value === payload.fecha) {
                     fetchReservas(payload.fecha);
                 }
             } else {
-                // Error del servidor (400 o 409)
                 const data = await res.json().catch(() => ({}));
                 const msg = data.mensaje || 'Error al guardar la reserva.';
                 conflictMsg.textContent = msg;

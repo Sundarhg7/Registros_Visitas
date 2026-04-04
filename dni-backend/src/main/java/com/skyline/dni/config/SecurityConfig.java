@@ -33,8 +33,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Deshabilitamos CSRF para simplificar las llamadas REST por el momento
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/personas/**", "/api/v1/ocurrencias/**", "/api/v1/reservas/**").authenticated()
-                .requestMatchers("/login", "/style.css", "/script.js", "/favicon.svg", "/registros.js", "/ocurrencias.js", "/reservas.js").permitAll() // Habilitamos los assets de la UI
-                .requestMatchers("/", "/index.html", "/registros", "/registros.html", "/ocurrencias", "/ocurrencias.html", "/reservas", "/reservas.html").authenticated() // Protegemos el frontend principal estático
+                .requestMatchers("/login", "/style.css", "/script.js", "/favicon.svg", "/registros.js", "/ocurrencias.js", "/reservas.js").permitAll()
+                .requestMatchers("/", "/index.html", "/dashboard.html", "/visitas", "/registros", "/registros.html", "/ocurrencias", "/ocurrencias.html", "/reservas", "/reservas.html").authenticated()
                 .anyRequest().permitAll()
             )
             .formLogin(form -> form

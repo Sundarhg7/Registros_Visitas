@@ -21,11 +21,13 @@
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
-                <div class="shg-logo">{SHG}</div>
-                <h1>Historial</h1>
+                <img src="/images/logo-shg.png" class="shg-logo-img" alt="SHG Logo"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                <div class="shg-logo" style="display:none;">{SHG}</div>
             </div>
             <nav class="main-nav">
                 <a href="/" class="nav-link"><i class="ph ph-house"></i> Principal</a>
+                <a href="/visitas" class="nav-link"><i class="ph ph-user-plus"></i> Registros</a>
                 <a href="/registros" class="nav-link active"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
                 <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
                 <a href="/reservas" class="nav-link"><i class="ph ph-calendar-check"></i> Reservas</a>
@@ -58,7 +60,8 @@
                 <div class="list-header">
                     <h2>Auditoría de Registros</h2>
                     <div class="list-actions" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha" style="flex-grow: 1; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                        <input type="date" id="filterDate" class="date-input" title="Filtrar por fecha"
+                            style="flex-grow: 1; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
                         <button type="button" id="btnExport" class="btn-square" title="Descargar Reporte en Excel">
                             <i class="ph ph-download-simple"></i>
                         </button>
@@ -66,7 +69,8 @@
                     </div>
                 </div>
 
-                <div class="visit-list" id="visitList" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                <div class="visit-list" id="visitList"
+                    style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem;">
                     <!-- Cards will be injected here -->
                     <div class="empty-state">
                         <i class="ph ph-users-three"></i>
@@ -78,4 +82,5 @@
     </div>
     <script src="registros.js"></script>
 </body>
+
 </html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Principal | SHG</title>
+    <meta name="description"
+        content="Panel de control principal del sistema de gestión SHG. Acceso a Registros, Historial, Reservas y Ocurrencias.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
+    <style>
+        /* ── Dashboard override: body centrado verticalmente ── */
+        body {
+            align-items: flex-start;
+        }
+
+        .app-container {
+            min-height: 100vh;
+        }
+
+        /* ── Hero section ── */
+        .dashboard-hero {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            animation: fadeInDown 0.7s ease-out;
+        }
+
+        .dashboard-hero .welcome-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--accent-glow);
+            color: var(--accent-color);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 20px;
+            padding: 0.4rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.02em;
+        }
+
+        .dashboard-hero h2 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 0.6rem;
+        }
+
+        .dashboard-hero h2 span {
+            background: linear-gradient(135deg, var(--accent-color), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dashboard-hero p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        /* ── Module cards grid ── */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            padding: 0 0 3rem;
+            animation: fadeInUp 0.6s ease-out 0.15s both;
+        }
+
+        @media (max-width: 640px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .module-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 2.2rem 2rem;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(.34, 1.56, .64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--card-accent, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: inherit;
+        }
+
+        .module-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 20px 60px -15px var(--card-shadow, rgba(59, 130, 246, 0.2));
+            border-color: var(--card-border, var(--accent-color));
+        }
+
+        .module-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Variantes de color por módulo */
+        .card-registros {
+            --card-accent: linear-gradient(135deg, rgba(59, 130, 246, 0.04), transparent);
+            --card-shadow: rgba(59, 130, 246, 0.25);
+            --card-border: rgba(59, 130, 246, 0.4);
+            --icon-bg: rgba(59, 130, 246, 0.12);
+            --icon-color: #3b82f6;
+        }
+
+        .card-historial {
+            --card-accent: linear-gradient(135deg, rgba(16, 185, 129, 0.04), transparent);
+            --card-shadow: rgba(16, 185, 129, 0.25);
+            --card-border: rgba(16, 185, 129, 0.4);
+            --icon-bg: rgba(16, 185, 129, 0.12);
+            --icon-color: #10b981;
+        }
+
+        .card-reservas {
+            --card-accent: linear-gradient(135deg, rgba(124, 58, 237, 0.04), transparent);
+            --card-shadow: rgba(124, 58, 237, 0.25);
+            --card-border: rgba(124, 58, 237, 0.4);
+            --icon-bg: rgba(124, 58, 237, 0.12);
+            --icon-color: #7c3aed;
+        }
+
+        .card-ocurrencias {
+            --card-accent: linear-gradient(135deg, rgba(245, 158, 11, 0.04), transparent);
+            --card-shadow: rgba(245, 158, 11, 0.25);
+            --card-border: rgba(245, 158, 11, 0.4);
+            --icon-bg: rgba(245, 158, 11, 0.12);
+            --icon-color: #f59e0b;
+        }
+
+        .module-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: var(--icon-bg);
+            color: var(--icon-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .module-card:hover .module-icon {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        .module-info h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.02em;
+        }
+
+        .module-info p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .module-arrow {
+            position: absolute;
+            bottom: 1.8rem;
+            right: 1.8rem;
+            width: 36px;
+            height: 36px;
+            background: var(--icon-bg);
+            color: var(--icon-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .module-card:hover .module-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ── Bottom stat strip ── */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: -0.5rem;
+            animation: fadeInUp 0.6s ease-out 0.25s both;
+        }
+
+        .qs-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .qs-icon {
+            font-size: 1.6rem;
+            color: var(--accent-color);
+        }
+
+        .qs-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .qs-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .qs-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-hero {
+                padding: 2rem 1rem 1.5rem;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <img src="/images/logo-shg.png" class="shg-logo-img" alt="SHG Logo"
+                    onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display='flex';">
+                <div class="shg-logo logo-fallback" style="display:none;">{SHG}</div>
+
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="nav-link active"><i class="ph ph-house"></i> Principal</a>
+                <a href="/visitas" class="nav-link"><i class="ph ph-user-plus"></i> Registros</a>
+                <a href="/registros" class="nav-link"><i class="ph ph-clock-counter-clockwise"></i> Historial</a>
+                <a href="/ocurrencias" class="nav-link"><i class="ph ph-warning-circle"></i> Ocurrencias</a>
+                <a href="/reservas" class="nav-link"><i class="ph ph-calendar-check"></i> Reservas</a>
+            </nav>
+            <div class="header-actions">
+                <button id="themeToggle" class="btn-icon-header" title="Cambiar Tema">
+                    <i class="ph ph-moon"></i>
+                </button>
+                <div class="time-widget" id="timeWidget">--:--</div>
+                <a href="/logout" class="btn-logout" title="Cerrar Sesión">
+                    <i class="ph ph-sign-out"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="dashboard-hero">
+            <div class="welcome-badge">
+                <i class="ph ph-buildings-fill"></i>
+                Sistema de Gestión SHG
+            </div>
+            <h2>Bienvenido al <span>Panel de Control</span></h2>
+            <p>Seleccione un módulo para comenzar a gestionar el edificio</p>
+        </section>
+
+        <!-- Module Cards -->
+        <div class="modules-grid">
+
+            <a href="/visitas" class="module-card card-registros" id="card-registros">
+                <div class="module-icon">
+                    <i class="ph ph-user-plus ph-fill"></i>
+                </div>
+                <div class="module-info">
+                    <h3>Registros</h3>
+                    <p>Registre el ingreso de visitantes consultando su DNI automáticamente</p>
+                </div>
+                <div class="module-arrow"><i class="ph ph-arrow-right"></i></div>
+            </a>
+
+            <a href="/registros" class="module-card card-historial" id="card-historial">
+                <div class="module-icon">
+                    <i class="ph ph-clock-counter-clockwise ph-fill"></i>
+                </div>
+                <div class="module-info">
+                    <h3>Historial</h3>
+                    <p>Consulte y exporte el registro histórico de todas las visitas por fecha</p>
+                </div>
+                <div class="module-arrow"><i class="ph ph-arrow-right"></i></div>
+            </a>
+
+            <a href="/reservas" class="module-card card-reservas" id="card-reservas">
+                <div class="module-icon">
+                    <i class="ph ph-calendar-check ph-fill"></i>
+                </div>
+                <div class="module-info">
+                    <h3>Reservas</h3>
+                    <p>Gestione las reservas de áreas comunes: parrilla, gimnasio, SUM y más</p>
+                </div>
+                <div class="module-arrow"><i class="ph ph-arrow-right"></i></div>
+            </a>
+
+            <a href="/ocurrencias" class="module-card card-ocurrencias" id="card-ocurrencias">
+                <div class="module-icon">
+                    <i class="ph ph-warning-octagon ph-fill"></i>
+                </div>
+                <div class="module-info">
+                    <h3>Ocurrencias</h3>
+                    <p>Registre y consulte incidentes, novedades y eventos del edificio</p>
+                </div>
+                <div class="module-arrow"><i class="ph ph-arrow-right"></i></div>
+            </a>
+
+        </div>
+
+        <!-- Quick stats strip -->
+        <div class="quick-stats" id="quickStats">
+            <div class="qs-card">
+                <i class="ph ph-users qs-icon"></i>
+                <div class="qs-text">
+                    <span class="qs-value" id="qsVisitas">–</span>
+                    <span class="qs-label">Visitas hoy</span>
+                </div>
+            </div>
+            <div class="qs-card">
+                <i class="ph ph-calendar-check qs-icon" style="color:#7c3aed;"></i>
+                <div class="qs-text">
+                    <span class="qs-value" id="qsReservas">–</span>
+                    <span class="qs-label">Reservas hoy</span>
+                </div>
+            </div>
+            <div class="qs-card">
+                <i class="ph ph-warning qs-icon" style="color:#f59e0b;"></i>
+                <div class="qs-text">
+                    <span class="qs-value" id="qsOcurrencias">–</span>
+                    <span class="qs-label">Ocurrencias hoy</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggleBtn = document.getElementById('themeToggle');
+        if (themeToggleBtn) {
+            const themeIcon = themeToggleBtn.querySelector('i');
+            const updateIcon = (isDark) => { themeIcon.className = isDark ? 'ph ph-sun' : 'ph ph-moon'; };
+            updateIcon(document.documentElement.classList.contains('dark-theme'));
+            themeToggleBtn.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                updateIcon(isDark);
+            });
+        }
+
+        // Clock
+        const timeWidget = document.getElementById('timeWidget');
+        const tick = () => {
+            timeWidget.textContent = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
+        };
+        tick();
+        setInterval(tick, 1000);
+
+        // Quick stats: fetch data async
+        const today = new Date().toISOString().split('T')[0];
+
+        fetch(`/api/v1/personas/historico?fecha=${today}`)
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { document.getElementById('qsVisitas').textContent = data.length; })
+            .catch(() => { document.getElementById('qsVisitas').textContent = '–'; });
+
+        fetch(`/api/v1/reservas?fecha=${today}`)
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { document.getElementById('qsReservas').textContent = data.length; })
+            .catch(() => { document.getElementById('qsReservas').textContent = '–'; });
+
+        fetch(`/api/v1/ocurrencias?fecha=${today}`)
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { document.getElementById('qsOcurrencias').textContent = data.length; })
+            .catch(() => { document.getElementById('qsOcurrencias').textContent = '–'; });
+    </script>
+</body>
+
+</html>
